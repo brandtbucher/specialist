@@ -1,0 +1,113 @@
+name: CI
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  release:
+    types: published
+jobs:
+  black:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.11-dev"
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements*.txt') }}
+          restore-keys: pip-
+      - run: pip install --requirement requirements-pre.txt
+      - run: pip install --requirement requirements.txt
+      - run: black --check --diff *.py
+  mypy:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.11-dev"
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements*.txt') }}
+          restore-keys: pip-
+      - run: pip install --requirement requirements-pre.txt
+      - run: pip install --requirement requirements.txt
+      - run: mypy --strict *.py
+  pylint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.11-dev"
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements*.txt') }}
+          restore-keys: pip-
+      - run: pip install --requirement requirements-pre.txt
+      - run: pip install --requirement requirements.txt
+      - run: pylint *.py
+  pytest:
+    name: Test / Python ${{ matrix.python }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11-dev"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements*.txt') }}
+          restore-keys: pip-
+      - run: pip install --requirement requirements-pre.txt
+      - run: pip install --requirement requirements.txt
+      - run: pytest
+  setup:
+    name: Package
+    needs: [black, mypy, pylint, pytest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.11-dev"
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements-pre.txt') }}
+          restore-keys: pip-
+      - run: pip install --requirement requirements-pre.txt
+      - run: python setup.py sdist bdist_wheel
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist
+  publish:
+    name: Publish
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [setup]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
+          skip_existing: true
