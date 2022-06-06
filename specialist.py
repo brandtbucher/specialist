@@ -379,11 +379,10 @@ def main() -> None:
             for match in pathlib.Path().glob(targets):
                 if get_code_for_path(match) is not None:
                     paths.append(match)
+        elif path is not None:
+            paths.append(path)
         if not paths:
-            if path is not None:
-                paths.append(path)
-            else:
-                print("No source files found!")
+            print("No source files found!")
         for path in paths:
             view(path, blue=blue, dark=dark)
         if caught:
