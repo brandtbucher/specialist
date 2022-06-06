@@ -280,9 +280,18 @@ def browse(page: str) -> None:
         server.handle_request()
 
 
-def parse_args(
-    args: list[str] | None = None,
-) -> dict[str, list[str] | str | bool | None]:
+class Args(typing.TypedDict):
+    """Command line arguments."""
+
+    blue: bool
+    dark: bool
+    targets: str | None
+    command: typing.Sequence[str]
+    module: typing.Sequence[str]
+    file: typing.Sequence[str]
+
+
+def parse_args(args: list[str] | None = None) -> Args:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description=__doc__, add_help=False)
     options = parser.add_argument_group("Options")
@@ -332,7 +341,7 @@ def parse_args(
     parser.add_argument(
         action="extend", nargs="...", dest="file", help=argparse.SUPPRESS
     )
-    return vars(parser.parse_args(args))
+    return typing.cast(Args, vars(parser.parse_args(args)))
 
 
 def main() -> None:
@@ -367,7 +376,6 @@ def main() -> None:
                 assert False, args
         paths: list[pathlib.Path] = []
         if targets is not None:
-            assert isinstance(targets, str)
             for match in pathlib.Path().glob(targets):
                 if get_code_for_path(match) is not None:
                     paths.append(match)
@@ -376,8 +384,6 @@ def main() -> None:
                 paths.append(path)
             else:
                 print("No source files found!")
-        assert isinstance(blue, bool)
-        assert isinstance(dark, bool)
         for path in paths:
             view(path, blue=blue, dark=dark)
         if caught:
