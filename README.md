@@ -4,7 +4,7 @@
 Specialist
 ==========
 
-[![latest version](https://img.shields.io/github/release-pre/brandtbucher/specialist.svg?style=for-the-badge&label=latest)![latest release date](https://img.shields.io/github/release-date-pre/brandtbucher/specialist.svg?style=for-the-badge&label=released)](https://github.com/brandtbucher/specialist/releases)[![build status](https://img.shields.io/github/workflow/status/brandtbucher/specialist/CI/master.svg?style=for-the-badge)](https://github.com/brandtbucher/specialist/actions)[![issues](https://img.shields.io/github/issues-raw/brandtbucher/specialist.svg?label=issues&style=for-the-badge)](https://github.com/brandtbucher/specialist/issues)
+[![latest version](https://img.shields.io/github/release-pre/brandtbucher/specialist.svg?style=for-the-badge&label=latest)![latest release date](https://img.shields.io/github/release-date-pre/brandtbucher/specialist.svg?style=for-the-badge&label=released)](https://github.com/brandtbucher/specialist/releases)[![build status](https://img.shields.io/github/workflow/status/brandtbucher/specialist/CI/main.svg?style=for-the-badge)](https://github.com/brandtbucher/specialist/actions)[![issues](https://img.shields.io/github/issues-raw/brandtbucher/specialist.svg?label=issues&style=for-the-badge)](https://github.com/brandtbucher/specialist/issues)
 
 <br>
 
