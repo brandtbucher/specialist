@@ -23,7 +23,7 @@ jobs:
           key: pip-${{ hashFiles('requirements*.txt') }}
           restore-keys: pip-
       - run: pip install --requirement requirements-pre.txt
-      - run: pip install --requirement requirements.txt
+      - run: pip install --requirement requirements-test.txt
       - run: black --check --diff *.py
   mypy:
     name: Typecheck
@@ -39,7 +39,7 @@ jobs:
           key: pip-${{ hashFiles('requirements*.txt') }}
           restore-keys: pip-
       - run: pip install --requirement requirements-pre.txt
-      - run: pip install --requirement requirements.txt
+      - run: pip install --requirement requirements-test.txt
       - run: mypy --strict *.py
   pylint:
     name: Lint
@@ -55,7 +55,7 @@ jobs:
           key: pip-${{ hashFiles('requirements*.txt') }}
           restore-keys: pip-
       - run: pip install --requirement requirements-pre.txt
-      - run: pip install --requirement requirements.txt
+      - run: pip install --requirement requirements-test.txt
       - run: pylint *.py
   pytest:
     name: Test / Python ${{ matrix.python }}
@@ -75,7 +75,7 @@ jobs:
           key: pip-${{ hashFiles('requirements*.txt') }}
           restore-keys: pip-
       - run: pip install --requirement requirements-pre.txt
-      - run: pip install --requirement requirements.txt
+      - run: pip install --requirement requirements-test.txt
       - run: pytest
   setup:
     name: Package
