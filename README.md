@@ -173,7 +173,7 @@ given a file path:
 $ specialist spam/eggs.py foo bar baz
 ```
 
-Or a module name
+Or a module name:
 
 ```sh
 $ specialist -m spam.eggs foo bar baz
@@ -182,7 +182,7 @@ $ specialist -m spam.eggs foo bar baz
 Or a command:
 
 ```sh
-specialist -c 'import spam; spam.eggs()' foo bar baz
+$ specialist -c 'import spam; spam.eggs()' foo bar baz
 ```
 
 It also has a `-t`/`--targets` option to support discovery of arbitrary "target"
@@ -206,7 +206,7 @@ Options
 ### `-b`/`--blue`
 
 Use blue (rather than green) to indicate specialized code. Some users may find
-a blue-purple-pink-red gradient easier to read than the default
+a blue-violet-pink-red gradient easier to read than the default
 green-yellow-orange-red one.
 
 ### `-d`/`--dark`
