@@ -31,6 +31,7 @@ import http.server
 import importlib.util
 import itertools
 import opcode
+import os
 import pathlib
 import runpy
 import tempfile
@@ -39,7 +40,7 @@ import webbrowser
 
 FIRST_POSTION = (1, 0)
 LAST_POSITION = (sys.maxsize, 0)
-SPECIALIZED_INSTRUCTIONS = frozenset(opcode._specialized_instructions)  # type: ignore  # pylint: disable = protected-access
+SPECIALIZED_INSTRUCTIONS = frozenset(opcode._specialized_instructions)  # type: ignore [attr-defined] # pylint: disable = protected-access
 
 
 class HTMLWriter:
@@ -67,12 +68,7 @@ class HTMLWriter:
 
     def emit(self) -> str:
         """Emit the HTML."""
-        self._parts.append("</pre>")
-        self._parts.append("</body>")
-        self._parts.append("</html>")
-        out = "".join(self._parts)
-        self._parts.clear()
-        return out
+        return "".join([*self._parts, "</pre></body></html>"])
 
     def _color(self, stats: "Stats") -> str:
         """Compute an RGB color code for this chunk."""
@@ -206,7 +202,7 @@ def parse(code: types.CodeType) -> typing.Generator[SourceChunk, None, None]:
     for child in walk_code(code):
         # dis has a bug in how position information is computed for CACHEs:
         fixed_positions = list(child.co_positions())
-        for instruction in dis.get_instructions(child, adaptive=True):  # type: ignore
+        for instruction in dis.get_instructions(child, adaptive=True):  # type: ignore [call-arg]
             position = fixed_positions[instruction.offset // 2]
             lineno, end_lineno, col_offset, end_col_offset = position
             if (
@@ -238,7 +234,13 @@ def get_code_for_path(path: pathlib.Path) -> types.CodeType | None:
     return None
 
 
-def view(path: pathlib.Path, *, blue: bool = False, dark: bool = False) -> None:
+def view(
+    path: pathlib.Path,
+    *,
+    blue: bool = False,
+    dark: bool = False,
+    out: pathlib.Path | None,
+) -> None:
     """View a code object's source code."""
     writer = HTMLWriter(blue=blue, dark=dark)
     code = get_code_for_path(path)
@@ -256,7 +258,14 @@ def view(path: pathlib.Path, *, blue: bool = False, dark: bool = False) -> None:
                     assert chunk.start == (lineno, col_offset)
                 group.append(character)
     writer.add("".join(group), chunk.stats)
-    browse(writer.emit())
+    written = writer.emit()
+    if out is not None:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.unlink(missing_ok=True)
+        out.write_text(written)
+        print(f"{path} -> {out}")
+    else:
+        browse(written)
 
 
 def browse(page: str) -> None:
@@ -285,6 +294,7 @@ class Args(typing.TypedDict):
 
     blue: bool
     dark: bool
+    output: pathlib.Path | None
     targets: str | None
     command: typing.Sequence[str]
     module: typing.Sequence[str]
@@ -303,6 +313,13 @@ def parse_args(args: list[str] | None = None) -> Args:
     )
     options.add_argument(
         "-h", "--help", action="help", help="Show this help message and exit."
+    )
+    options.add_argument(
+        "-o",
+        "--output",
+        metavar="<output>",
+        help="A directory to write HTML files to (rather than serving them).",
+        type=pathlib.Path,
     )
     options.add_argument(
         "-t",
@@ -349,6 +366,7 @@ def main() -> None:
     args = parse_args()
     blue = args["blue"]
     dark = args["dark"]
+    output = args["output"]
     targets = args["targets"]
     path: pathlib.Path | None
     with tempfile.TemporaryDirectory() as work:
@@ -378,13 +396,27 @@ def main() -> None:
         if targets is not None:
             for match in pathlib.Path().glob(targets):
                 if get_code_for_path(match) is not None:
-                    paths.append(match)
+                    paths.append(match.resolve())
         elif path is not None:
-            paths.append(path)
+            paths.append(path.resolve())
         if not paths:
             print("No source files found!")
-        for path in paths:
-            view(path, blue=blue, dark=dark)
+        else:
+            if output is not None:
+                common = pathlib.Path(
+                    os.path.commonpath(paths)  # pylint: disable = no-member
+                ).resolve()
+                output = output.resolve()
+                path_and_out: typing.Generator[
+                    tuple[pathlib.Path, pathlib.Path | None], None, None
+                ] = (
+                    (path, output / path.relative_to(common).with_suffix(".html"))
+                    for path in paths
+                )
+            else:
+                path_and_out = ((path, None) for path in paths)
+            for path, out in path_and_out:
+                view(path, blue=blue, dark=dark, out=out)
         if caught:
             raise caught[0] from None
 

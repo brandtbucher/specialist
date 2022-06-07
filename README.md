@@ -199,6 +199,17 @@ Multiple files can be provided using "glob" style patterns:
 $ specialist --targets 'spam/**/*.py' -m pytest
 ```
 
+Specialist can also write the generated HTML files to the filesystem instead of
+opening them in a browser. To do so, just provide an output directory path using
+the `-o`/`--output` option:
+
+```sh
+$ specialist --output ../report --targets 'spam/**/*.py' -m pytest
+/home/brandtbucher/sketch/spam/__init__.py -> /home/brandtbucher/report/__init__.html
+/home/brandtbucher/sketch/spam/_spammy.py -> /home/brandtbucher/report/_spammy.html
+/home/brandtbucher/sketch/spam/eggs/__init__.py -> /home/brandtbucher/report/eggs/__init__.html
+/home/brandtbucher/sketch/spam/eggs/_eggy.py -> /home/brandtbucher/report/eggs/_eggy.html
+```
 
 Options
 -------
@@ -206,7 +217,7 @@ Options
 ### `-b`/`--blue`
 
 Use blue (rather than green) to indicate specialized code. Some users may find
-a blue-violet-pink-red gradient easier to read than the default
+a blue-violet-magenta-red gradient easier to read than the default
 green-yellow-orange-red one.
 
 ### `-d`/`--dark`
