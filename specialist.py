@@ -53,6 +53,9 @@ class HTMLWriter:
         self._parts = [
             "<!doctype html>",
             "<html>",
+            "<head>",
+            "<meta http-equiv='content-type' content='text/html;charset=utf-8'/>",
+            "</head>",
             f"<body style='background-color:{background_color};color:{color}'>",
             "<pre>",
         ]
@@ -247,17 +250,17 @@ def view(
     assert code is not None
     parser = parse(code)
     chunk = next(parser)
-    group: list[str] = []
-    with path.open() as file:
+    group = bytearray()
+    with path.open("rb") as file:
         for lineno, line in enumerate(file, 1):
             for col_offset, character in enumerate(line):
                 if chunk.stop == (lineno, col_offset):
-                    writer.add("".join(group), chunk.stats)
+                    writer.add(group.decode("utf-8"), chunk.stats)
                     group.clear()
                     chunk = next(parser)
                     assert chunk.start == (lineno, col_offset)
                 group.append(character)
-    writer.add("".join(group), chunk.stats)
+    writer.add(group.decode("utf-8"), chunk.stats)
     written = writer.emit()
     if out is not None:
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -277,7 +280,6 @@ def browse(page: str) -> None:
         def do_GET(self) -> None:  # pylint: disable = invalid-name
             """Serve the given HTML."""
             self.send_response(200)
-            self.send_header("content-type", "text/html")
             self.end_headers()
             self.wfile.write(page.encode("utf-8"))
 
