@@ -92,6 +92,11 @@ class HTMLWriter:
         return f"#{int(255 * rgb[0]):02x}{int(255 * rgb[1]):02x}{int(255 * rgb[2]):02x}"
 
 
+def stderr(*args: object) -> None:
+    """Print to stdout."""
+    print("specialist:", *args, file=sys.stderr, flush=True)
+
+
 def is_superinstruction(instruction: dis.Instruction) -> bool:
     """Check if an instruction is a superinstruction."""
     return "__" in instruction.opname
@@ -237,6 +242,40 @@ def get_code_for_path(path: pathlib.Path) -> types.CodeType | None:
     return None
 
 
+def source_and_stats(
+    path: pathlib.Path,
+) -> typing.Generator[tuple[str, Stats], None, None]:
+    """Get the source code for a file, and its statistics."""
+    code = get_code_for_path(path)
+    assert code is not None
+    parser = parse(code)
+    chunk = next(parser, None)
+    assert chunk is not None
+    group: list[str] = []
+    with path.open() as file:
+        for lineno, line in enumerate(file, 1):
+            col_offset = 0
+            for character in line:
+                position = lineno, col_offset
+                if chunk.stop <= position:
+                    yield "".join(group), chunk.stats
+                    group.clear()
+                    while chunk.stop <= position:
+                        new_chunk = next(parser, None)
+                        assert new_chunk is not None
+                        assert new_chunk.start == chunk.stop
+                        chunk = new_chunk
+                    if chunk.start != position:
+                        stderr(
+                            f"{path}:{lineno}:{col_offset} has changed since being run.",
+                            "Attempting to recover...",
+                        )
+                assert chunk.start <= position < chunk.stop
+                group.append(character)
+                col_offset += len(character.encode("utf-8"))
+    yield "".join(group), chunk.stats
+
+
 def view(
     path: pathlib.Path,
     *,
@@ -246,27 +285,14 @@ def view(
 ) -> None:
     """View a code object's source code."""
     writer = HTMLWriter(blue=blue, dark=dark)
-    code = get_code_for_path(path)
-    assert code is not None
-    parser = parse(code)
-    chunk = next(parser)
-    group = bytearray()
-    with path.open("rb") as file:
-        for lineno, line in enumerate(file, 1):
-            for col_offset, character in enumerate(line):
-                if chunk.stop == (lineno, col_offset):
-                    writer.add(group.decode("utf-8"), chunk.stats)
-                    group.clear()
-                    chunk = next(parser)
-                    assert chunk.start == (lineno, col_offset)
-                group.append(character)
-    writer.add(group.decode("utf-8"), chunk.stats)
+    for source, stats in source_and_stats(path):
+        writer.add(source, stats)
     written = writer.emit()
     if out is not None:
         out.parent.mkdir(parents=True, exist_ok=True)
         out.unlink(missing_ok=True)
         out.write_text(written)
-        print(f"{path} -> {out}")
+        stderr(path, "->", out)
     else:
         browse(written)
 
@@ -402,7 +428,7 @@ def main() -> None:
         elif path is not None:
             paths.append(path.resolve())
         if not paths:
-            print("No source files found!")
+            stderr("No source files found!")
         else:
             if output is not None:
                 common = pathlib.Path(
