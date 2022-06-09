@@ -257,8 +257,9 @@ def source_and_stats(
             col_offset = 0
             for character in line:
                 position = lineno, col_offset
-                # Technically this should be "==", but "<=" gives us a better
-                # chance of recovering if the source file changes:
+                # Technically this should be "if chunk.stop == position: ...",
+                # but the current form gives us a better chance of recovering if
+                # something's off with the source file:
                 while chunk.stop <= position:
                     yield "".join(group), chunk.stats
                     group.clear()
