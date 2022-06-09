@@ -15,5 +15,5 @@ setuptools.setup(
     py_modules=["specialist"],
     python_requires=">=3.11",
     url="https://github.com/brandtbucher/specialist",
-    version="0.0.0",
+    version="0.1.1",
 )
