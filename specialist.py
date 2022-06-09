@@ -257,19 +257,15 @@ def source_and_stats(
             col_offset = 0
             for character in line:
                 position = lineno, col_offset
-                if chunk.stop <= position:
+                # Technically this should be "==", but "<=" gives us a better
+                # chance of recovering if the source file changes:
+                while chunk.stop <= position:
                     yield "".join(group), chunk.stats
                     group.clear()
-                    while chunk.stop <= position:
-                        new_chunk = next(parser, None)
-                        assert new_chunk is not None
-                        assert new_chunk.start == chunk.stop
-                        chunk = new_chunk
-                    if chunk.start != position:
-                        stderr(
-                            f"{path}:{lineno}:{col_offset} has changed since being run.",
-                            "Attempting to recover...",
-                        )
+                    new_chunk = next(parser, None)
+                    assert new_chunk is not None
+                    assert new_chunk.start == chunk.stop
+                    chunk = new_chunk
                 assert chunk.start <= position < chunk.stop
                 group.append(character)
                 col_offset += len(character.encode("utf-8"))
