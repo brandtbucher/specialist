@@ -99,7 +99,10 @@ def stderr(*args: object) -> None:
 
 def is_superinstruction(instruction: dis.Instruction) -> bool:
     """Check if an instruction is a superinstruction."""
-    return "__" in instruction.opname
+    opname = instruction.opname
+    return "__" in opname or (
+        opname.startswith("COMPARE_OP_") and opname.endswith("_JUMP")
+    )
 
 
 def score_instruction(
