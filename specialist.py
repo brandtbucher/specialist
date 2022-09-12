@@ -434,6 +434,9 @@ def main() -> None:
                 common = pathlib.Path(
                     os.path.commonpath(paths)  # pylint: disable = no-member
                 ).resolve()
+                if common.is_file():
+                    common = common.parent
+                assert common.is_dir(), common
                 output = output.resolve()
                 path_and_out: typing.Generator[
                     tuple[pathlib.Path, pathlib.Path | None], None, None
