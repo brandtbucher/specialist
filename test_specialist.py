@@ -6,34 +6,36 @@ import pytest
 
 import specialist
 
+TEST_DATA = pathlib.Path(__file__).parent / "test-data"
+
 TESTS = list(
     zip(
-        sorted((pathlib.Path(__file__).parent / "input").iterdir()),
-        sorted((pathlib.Path(__file__).parent / "output").iterdir()),
+        sorted((TEST_DATA / "input").iterdir()),
+        sorted((TEST_DATA / "output").iterdir()),
         strict=True,
     )
 )
 
 TESTS_BLUE = list(
     zip(
-        sorted((pathlib.Path(__file__).parent / "input").iterdir()),
-        sorted((pathlib.Path(__file__).parent / "output-blue").iterdir()),
+        sorted((TEST_DATA / "input").iterdir()),
+        sorted((TEST_DATA / "output-blue").iterdir()),
         strict=True,
     )
 )
 
 TESTS_DARK = list(
     zip(
-        sorted((pathlib.Path(__file__).parent / "input").iterdir()),
-        sorted((pathlib.Path(__file__).parent / "output-dark").iterdir()),
+        sorted((TEST_DATA / "input").iterdir()),
+        sorted((TEST_DATA / "output-dark").iterdir()),
         strict=True,
     )
 )
 
 TESTS_DARK_BLUE = list(
     zip(
-        sorted((pathlib.Path(__file__).parent / "input").iterdir()),
-        sorted((pathlib.Path(__file__).parent / "output-dark-blue").iterdir()),
+        sorted((TEST_DATA / "input").iterdir()),
+        sorted((TEST_DATA / "output-dark-blue").iterdir()),
         strict=True,
     )
 )
