@@ -24,7 +24,7 @@ jobs:
           restore-keys: pip-
       - run: pip install --requirement requirements-pre.txt
       - run: pip install --requirement requirements-test.txt
-      - run: black --check --diff *.py
+      - run: black --check --diff *.py test/*.py
   mypy:
     name: Typecheck
     runs-on: ubuntu-latest
@@ -40,7 +40,7 @@ jobs:
           restore-keys: pip-
       - run: pip install --requirement requirements-pre.txt
       - run: pip install --requirement requirements-test.txt
-      - run: mypy --strict *.py
+      - run: mypy --strict *.py test/*.py
   pylint:
     name: Lint
     runs-on: ubuntu-latest
@@ -56,7 +56,7 @@ jobs:
           restore-keys: pip-
       - run: pip install --requirement requirements-pre.txt
       - run: pip install --requirement requirements-test.txt
-      - run: pylint *.py
+      - run: pylint *.py test/*.py
   pytest:
     name: Test / Python ${{ matrix.python }}
     strategy:

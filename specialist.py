@@ -1,14 +1,17 @@
 """Visualize CPython 3.11's specializing, adaptive interpreter."""
+import pathlib
 import sys
 import types
 
 if sys.version_info < (3, 11) or sys.implementation.name != "cpython":
-    raise RuntimeError("Specialist only supports CPython 3.11+!")
-CODE = set()
+    raise RuntimeError("Specialist only supports CPython 3.11+!")  # pragma: no cover
+CODE = {}
 
 
 @sys.addaudithook
-def audit_imports(event: str, args: "typing.Sequence[object]") -> None:
+def audit_imports(
+    event: str, args: "typing.Sequence[object]"
+) -> None:  # pragma: no cover
     """Intercept all exec() calls and grab a reference to the code they execute.
 
     This is the only way I know of to actually get ahold of module-level code
@@ -16,7 +19,7 @@ def audit_imports(event: str, args: "typing.Sequence[object]") -> None:
     """
     match event, args:
         case "exec", [types.CodeType(co_name="<module>") as code]:
-            CODE.add(code)
+            CODE[pathlib.Path(code.co_filename).resolve()] = code
 
 
 # pylint: disable = wrong-import-order, wrong-import-position
@@ -32,7 +35,6 @@ import importlib.util
 import itertools
 import opcode
 import os
-import pathlib
 import runpy
 import tempfile
 import typing
@@ -168,7 +170,7 @@ class Stats:
 
     def __add__(self, other: "Stats") -> "Stats":
         if not isinstance(other, Stats):
-            return NotImplemented
+            return NotImplemented  # pragma: no cover
         return Stats(
             specialized=self.specialized + other.specialized,
             adaptive=self.adaptive + other.adaptive,
@@ -177,7 +179,7 @@ class Stats:
 
     def __sub__(self, other: "Stats") -> "Stats":
         if not isinstance(other, Stats):
-            return NotImplemented
+            return NotImplemented  # pragma: no cover
         return Stats(
             specialized=self.specialized - other.specialized,
             adaptive=self.adaptive - other.adaptive,
@@ -211,7 +213,7 @@ def parse(code: types.CodeType) -> typing.Generator[SourceChunk, None, None]:
     events[LAST_POSITION] = Stats()
     previous = None
     for child in walk_code(code):
-        # dis has a bug in how position information is computed for CACHEs:
+        # dis had an old bug in how position information is computed for CACHEs:
         fixed_positions = list(child.co_positions())
         for instruction in dis.get_instructions(child, adaptive=True):  # type: ignore [call-arg]
             position = fixed_positions[instruction.offset // 2]
@@ -234,23 +236,11 @@ def parse(code: types.CodeType) -> typing.Generator[SourceChunk, None, None]:
         yield SourceChunk(start, stop, stats)
 
 
-def get_code_for_path(path: pathlib.Path) -> types.CodeType | None:
-    """Get the code object for a file."""
-    for code in CODE:
-        try:
-            if path.samefile(code.co_filename):
-                return code
-        except FileNotFoundError:
-            pass
-    return None
-
-
 def source_and_stats(
     path: pathlib.Path,
 ) -> typing.Generator[tuple[str, Stats], None, None]:
     """Get the source code for a file, and its statistics."""
-    code = get_code_for_path(path)
-    assert code is not None
+    code = CODE[path]
     parser = parse(code)
     chunk = next(parser, None)
     assert chunk is not None
@@ -274,6 +264,7 @@ def source_and_stats(
                 group.append(character)
                 col_offset += len(character.encode("utf-8"))
     yield "".join(group), chunk.stats
+    assert next(parser, None) is None
 
 
 def view(
@@ -418,12 +409,12 @@ def main() -> None:
                         source, run_name="__main__"
                     )
                 path = pathlib.Path(source)
-            case _:
+            case _:  # pragma: no cover
                 assert False, args
         paths: list[pathlib.Path] = []
         if targets is not None:
             for match in pathlib.Path().glob(targets):
-                if get_code_for_path(match) is not None:
+                if match.resolve() in CODE:
                     paths.append(match.resolve())
         elif path is not None:
             paths.append(path.resolve())
@@ -452,5 +443,5 @@ def main() -> None:
             raise caught[0] from None
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

@@ -1,5 +1,6 @@
 *.egg-info
 .DS_Store
+.coverage
 .mypy_cache
 .pytest_cache
 __pycache__
