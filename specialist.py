@@ -215,7 +215,7 @@ def parse(code: types.CodeType) -> typing.Generator[SourceChunk, None, None]:
     for child in walk_code(code):
         # dis had an old bug in how position information is computed for CACHEs:
         fixed_positions = list(child.co_positions())
-        for instruction in dis.get_instructions(child, adaptive=True):  # type: ignore [call-arg]
+        for instruction in dis.get_instructions(child, adaptive=True):
             position = fixed_positions[instruction.offset // 2]
             lineno, end_lineno, col_offset, end_col_offset = position
             if (
