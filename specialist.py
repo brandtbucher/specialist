@@ -9,9 +9,7 @@ if sys.version_info < (3, 11) or sys.implementation.name != "cpython":
 CODE = {}
 
 
-def audit_imports(
-    event: str, args: "typing.Sequence[object]"
-) -> None:  # pragma: no cover
+def audit_imports(event: str, args: "typing.Sequence[object]") -> None:
     """Intercept all exec() calls and grab a reference to the code they execute.
 
     This is the only way I know of to actually get ahold of module-level code
