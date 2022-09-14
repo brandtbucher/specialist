@@ -48,15 +48,15 @@ TESTS_DARK_BLUE = list(
 def assert_browses(expected: str) -> typing.Generator[None, None, None]:
     """Patch webbrowser.open_new_tab, and assert that it browses the expected output."""
 
-    def side_effect(url: str) -> None:
+    def open_new_tab(url: str) -> None:
         with urllib.request.urlopen(url, timeout=1) as actual:
             assert expected == actual.read().decode("utf-8")
 
     with unittest.mock.patch(
-        "webbrowser.open_new_tab", side_effect=side_effect
-    ) as open_new_tab:
+        "webbrowser.open_new_tab", side_effect=open_new_tab
+    ) as patched:
         yield
-    open_new_tab.assert_called_once()
+    patched.assert_called_once()
 
 
 @pytest.mark.parametrize("source, expected", TESTS)

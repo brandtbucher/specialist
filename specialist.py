@@ -311,14 +311,11 @@ def browse(page: str) -> None:
             """Don't log requests."""
 
     with http.server.HTTPServer(("localhost", 0), RequestHandler) as server:
-        # This doesn't really need its own thread, but it makes it much easier
-        # to test when mocking out webbrowser.open_new_tab:
-        thread = threading.Thread(
-            target=webbrowser.open_new_tab,
-            args=(f"http://localhost:{server.server_port}",),
-        )
+        # server.handle_request doesn't really need its own thread, but using
+        # one makes this easier to test (by patching webbrowser.open_new_tab):
+        thread = threading.Thread(target=server.handle_request)
         thread.start()
-        server.handle_request()
+        webbrowser.open_new_tab(f"http://localhost:{server.server_port}")
         thread.join()
 
 
