@@ -46,7 +46,7 @@ TESTS_DARK_BLUE = list(
 
 @contextlib.contextmanager
 def assert_browses(expected: str) -> typing.Generator[None, None, None]:
-    """Patch urllib.request.urlopen to return <response>."""
+    """Patch webbrowser.open_new_tab, and assert that it browses the expected output."""
 
     def side_effect(url: str) -> None:
         with urllib.request.urlopen(url, timeout=1) as actual:
@@ -54,9 +54,9 @@ def assert_browses(expected: str) -> typing.Generator[None, None, None]:
 
     with unittest.mock.patch(
         "webbrowser.open_new_tab", side_effect=side_effect
-    ) as urlopen:
+    ) as open_new_tab:
         yield
-    urlopen.assert_called_once()
+    open_new_tab.assert_called_once()
 
 
 @pytest.mark.parametrize("source, expected", TESTS)
