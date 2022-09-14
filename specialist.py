@@ -5,10 +5,10 @@ import types
 
 if sys.version_info < (3, 11) or sys.implementation.name != "cpython":
     raise RuntimeError("Specialist only supports CPython 3.11+!")  # pragma: no cover
+
 CODE = {}
 
 
-@sys.addaudithook
 def audit_imports(
     event: str, args: "typing.Sequence[object]"
 ) -> None:  # pragma: no cover
@@ -21,6 +21,9 @@ def audit_imports(
         case "exec", [types.CodeType(co_name="<module>") as code]:
             CODE[pathlib.Path(code.co_filename).resolve()] = code
 
+
+audit_imports.__cantrace__ = True  # type: ignore [attr-defined]
+sys.addaudithook(audit_imports)
 
 # pylint: disable = wrong-import-order, wrong-import-position
 import argparse

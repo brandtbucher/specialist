@@ -112,11 +112,38 @@ def test_main_dark_blue(source: pathlib.Path, expected: pathlib.Path) -> None:
 @pytest.mark.parametrize("source, expected", TESTS)
 def test_main_m(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist -m <source>"""
-    module = str(source.with_suffix("").relative_to(pathlib.Path.cwd())).replace(
-        "/", "."
-    )
+    module = ".".join(source.with_suffix("").relative_to(pathlib.Path.cwd()).parts)
     args = ["-m", module]
     with specialist.patch_sys_argv(args), assert_browses(expected.read_text()):
+        specialist.main()
+
+
+def test_main_m_raises_a() -> None:
+    """$ specialist -m __hello__"""
+    args = ["-m", "__hello__"]
+    with specialist.patch_sys_argv(args):
+        specialist.main()
+
+
+def test_main_m_raises_b() -> None:
+    """$ specialist -m __phello__"""
+    args = ["-m", "__phello__"]
+    with specialist.patch_sys_argv(args), pytest.raises(ImportError):
+        specialist.main()
+
+
+def test_main_m_raises_c() -> None:
+    """$ specialist -m __hello__"""
+    args = ["-m", "__phello__.nonexistent"]
+    with specialist.patch_sys_argv(args), pytest.raises(ImportError):
+        specialist.main()
+
+
+def test_main_no_location() -> None:
+    """$ specialist -c 'def g(): yield'"""
+    expected = "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;charset=utf-8'/></head><body style='background-color:white;color:black'><pre>def g(): yield</pre></body></html>"  # pylint: disable = line-too-long
+    args = ["-c", "def g(): yield"]
+    with specialist.patch_sys_argv(args), assert_browses(expected):
         specialist.main()
 
 
