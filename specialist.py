@@ -37,6 +37,7 @@ import opcode
 import os
 import runpy
 import tempfile
+import threading
 import typing
 import webbrowser
 
@@ -260,11 +261,17 @@ def source_and_stats(
                     assert new_chunk is not None
                     assert new_chunk.start == chunk.stop
                     chunk = new_chunk
+                    assert chunk is not None
                 assert chunk.start <= position < chunk.stop
                 group.append(character)
                 col_offset += len(character.encode("utf-8"))
     yield "".join(group), chunk.stats
-    assert next(parser, None) is None
+    extra_chunk = next(parser, None)
+    assert extra_chunk is None or (
+        extra_chunk.start == chunk.stop
+        and extra_chunk.stop == LAST_POSITION
+        and extra_chunk.stats == Stats()
+    ), extra_chunk
 
 
 def view(
@@ -304,8 +311,15 @@ def browse(page: str) -> None:
             """Don't log requests."""
 
     with http.server.HTTPServer(("localhost", 0), RequestHandler) as server:
-        webbrowser.open_new_tab(f"http://localhost:{server.server_port}")
+        # This doesn't really need its own thread, but it makes it much easier
+        # to test when mocking out webbrowser.open_new_tab:
+        thread = threading.Thread(
+            target=webbrowser.open_new_tab,
+            args=(f"http://localhost:{server.server_port}",),
+        )
+        thread.start()
         server.handle_request()
+        thread.join()
 
 
 class Args(typing.TypedDict):
