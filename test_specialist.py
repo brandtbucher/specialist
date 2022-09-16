@@ -45,25 +45,26 @@ TESTS_DARK_BLUE = list(
 
 
 @contextlib.contextmanager
-def assert_browses(expected: str) -> typing.Generator[None, None, None]:
+def assert_browses(
+    expected: typing.Sequence[str],
+) -> typing.Generator[None, None, None]:
     """Patch webbrowser.open_new_tab, and assert that it browses the expected output."""
+    expected_iter = iter(expected)
 
     def open_new_tab(url: str) -> None:
         with urllib.request.urlopen(url, timeout=1) as actual:
-            assert expected == actual.read().decode("utf-8")
+            assert next(expected_iter) == actual.read().decode("utf-8")
 
-    with unittest.mock.patch(
-        "webbrowser.open_new_tab", side_effect=open_new_tab
-    ) as patched:
+    with unittest.mock.patch("webbrowser.open_new_tab", side_effect=open_new_tab):
         yield
-    patched.assert_called_once()
+    assert next(expected_iter, None) is None
 
 
 @pytest.mark.parametrize("source, expected", TESTS)
 def test_main(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist <source>"""
     args = [str(source)]
-    with specialist.patch_sys_argv(args), assert_browses(expected.read_text()):
+    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
         specialist.main()
 
 
@@ -71,7 +72,7 @@ def test_main(source: pathlib.Path, expected: pathlib.Path) -> None:
 def test_main_blue(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist --blue <file>"""
     args = ["--blue", str(source)]
-    with specialist.patch_sys_argv(args), assert_browses(expected.read_text()):
+    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
         specialist.main()
 
 
@@ -79,15 +80,26 @@ def test_main_blue(source: pathlib.Path, expected: pathlib.Path) -> None:
 def test_main_c(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist -c ..."""
     args = ["-c", source.read_text()]
-    with specialist.patch_sys_argv(args), assert_browses(expected.read_text()):
+    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
         specialist.main()
 
 
 def test_main_c_raises() -> None:
     """$ specialist -c '[i * i for i in range(100)]; 42 / 0'"""
-    expected = "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;charset=utf-8'/></head><body style='background-color:white;color:black'><pre><span style='background-color:#d4fed4'>[</span><span style='background-color:#dafe91'>i</span><span style='background-color:#ffffb0'> * </span><span style='background-color:#dafe91'>i</span><span style='background-color:#d4fed4'> for </span><span style='background-color:#b0ffb0'>i</span><span style='background-color:#d4fed4'> in </span><span style='background-color:#dfffdf'>range</span><span style='background-color:#daffda'>(</span><span style='background-color:#ddffdd'>100</span><span style='background-color:#daffda'>)</span><span style='background-color:#d4fed4'>]</span>; 42 / 0</pre></body></html>"  # pylint: disable = line-too-long
+    expected = (
+        "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;"
+        "charset=utf-8'/></head><body style='background-color:white;color:black'><pre><"
+        "span style='background-color:#d4fed4'>[</span><span style='background-color:#d"
+        "afe91'>i</span><span style='background-color:#ffffb0'> * </span><span style='b"
+        "ackground-color:#dafe91'>i</span><span style='background-color:#d4fed4'> for <"
+        "/span><span style='background-color:#b0ffb0'>i</span><span style='background-c"
+        "olor:#d4fed4'> in </span><span style='background-color:#dfffdf'>range</span><s"
+        "pan style='background-color:#daffda'>(</span><span style='background-color:#dd"
+        "ffdd'>100</span><span style='background-color:#daffda'>)</span><span style='ba"
+        "ckground-color:#d4fed4'>]</span>; 42 / 0</pre></body></html>"
+    )
     args = ["-c", "[i * i for i in range(100)]; 42 / 0"]
-    with specialist.patch_sys_argv(args), assert_browses(expected), pytest.raises(
+    with specialist.patch_sys_argv(args), assert_browses([expected]), pytest.raises(
         ZeroDivisionError
     ):
         specialist.main()
@@ -97,7 +109,7 @@ def test_main_c_raises() -> None:
 def test_main_dark(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist --dark <file>"""
     args = ["--dark", str(source)]
-    with specialist.patch_sys_argv(args), assert_browses(expected.read_text()):
+    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
         specialist.main()
 
 
@@ -105,7 +117,7 @@ def test_main_dark(source: pathlib.Path, expected: pathlib.Path) -> None:
 def test_main_dark_blue(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist --dark --blue <file>"""
     args = ["--dark", "--blue", str(source)]
-    with specialist.patch_sys_argv(args), assert_browses(expected.read_text()):
+    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
         specialist.main()
 
 
@@ -114,7 +126,7 @@ def test_main_m(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist -m <source>"""
     module = ".".join(source.with_suffix("").relative_to(pathlib.Path.cwd()).parts)
     args = ["-m", module]
-    with specialist.patch_sys_argv(args), assert_browses(expected.read_text()):
+    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
         specialist.main()
 
 
@@ -141,13 +153,20 @@ def test_main_m_raises_c() -> None:
 
 def test_main_no_location() -> None:
     """$ specialist -c 'def g(): yield from range(100)\nlist(g())'"""
-    expected = "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;charset=utf-8'/></head><body style='background-color:white;color:black'><pre>def g(): <span style='background-color:#d4fed4'>yield from </span><span style='background-color:#ffbb76'>range</span><span style='background-color:#feda91'>(</span><span style='background-color:#ffdd99'>100</span><span style='background-color:#feda91'>)</span>\nlist(g())</pre></body></html>"  # pylint: disable = line-too-long
+    expected = (
+        "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;"
+        "charset=utf-8'/></head><body style='background-color:white;color:black'><pre>d"
+        "ef g(): <span style='background-color:#d4fed4'>yield from </span><span style='"
+        "background-color:#ffbb76'>range</span><span style='background-color:#feda91'>("
+        "</span><span style='background-color:#ffdd99'>100</span><span style='backgroun"
+        "d-color:#feda91'>)</span>\nlist(g())</pre></body></html>"
+    )
     args = ["-c", "def g(): yield from range(100)\nlist(g())"]
-    with specialist.patch_sys_argv(args), assert_browses(expected):
+    with specialist.patch_sys_argv(args), assert_browses([expected]):
         specialist.main()
 
 
-def test_main_o_quickened_code_found() -> None:
+def test_main_no_quickened_code_found() -> None:
     """$ specialist -c 'pass'"""
     args = ["-c", "pass"]
     with specialist.patch_sys_argv(args):
@@ -172,5 +191,40 @@ def test_main_targets(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist --targets <source> <source>"""
     targets = source.relative_to(pathlib.Path.cwd())
     args = ["--targets", str(targets), str(source)]
-    with specialist.patch_sys_argv(args), assert_browses(expected.read_text()):
+    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
+        specialist.main()
+
+
+def test_main_targets_output_c(tmp_path: pathlib.Path) -> None:
+    """$ specialist --targets 'test-data/input/*' -c 'pass'"""
+    args = ["--targets", "test-data/input/*", "--output", str(tmp_path), "-c", "pass"]
+    with specialist.patch_sys_argv(args):
+        specialist.main()
+    for actual, expected in zip(
+        sorted(tmp_path.iterdir()),
+        sorted((TEST_DATA / "output").glob("output-*.html")),
+        strict=True,
+    ):
+        assert actual.read_text() == expected.read_text()
+
+
+def test_main_package() -> None:
+    """$ specialist -m test-data.input-package"""
+    expected = (
+        "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;"
+        "charset=utf-8'/></head><body style='background-color:white;color:black'><pre><"
+        "span style='background-color:#daffda'>[</span><span style='background-color:#d"
+        "fff9f'>i</span><span style='background-color:#ffffbb'> * </span><span style='b"
+        "ackground-color:#dfff9f'>i</span><span style='background-color:#daffda'> for <"
+        "/span><span style='background-color:#bbffbb'>i</span><span style='background-c"
+        "olor:#daffda'> in </span><span style='background-color:#e2ffe2'>range</span><s"
+        "pan style='background-color:#dfffdf'>(</span><span style='background-color:#e1"
+        "ffe1'>100</span><span style='background-color:#dfffdf'>)</span><span style='ba"
+        "ckground-color:#daffda'>]</span>\n</pre></body></html>"
+    )
+    module = ".".join(
+        (TEST_DATA / "input-package").relative_to(pathlib.Path.cwd()).parts
+    )
+    args = ["-m", module]
+    with specialist.patch_sys_argv(args), assert_browses([expected]):
         specialist.main()

@@ -291,8 +291,8 @@ def view(
         writer.add(source, stats)
     if not quickened:
         stderr(
-            "No quickened code found!",
-            "Try running your code longer, or use the --targets option to analyze different source files.",
+            "No quickened code found! Try running your code longer, "
+            "or use the --targets option to analyze different source files."
         )
         return
     written = writer.emit()
@@ -458,7 +458,7 @@ def main() -> None:
                 )
             else:
                 path_and_out = ((path, None) for path in paths)
-            for path, out in path_and_out:
+            for path, out in sorted(path_and_out):
                 view(path, blue=blue, dark=dark, out=out)
         if caught:
             raise caught[0] from None
