@@ -284,8 +284,17 @@ def view(
 ) -> None:
     """View a code object's source code."""
     writer = HTMLWriter(blue=blue, dark=dark)
+    quickened = False
     for source, stats in source_and_stats(path):
+        if not stats.unquickened:
+            quickened = True
         writer.add(source, stats)
+    if not quickened:
+        stderr(
+            "No quickened code found!",
+            "Try running your code longer, or use the --targets option to analyze different source files.",
+        )
+        return
     written = writer.emit()
     if out is not None:
         out.parent.mkdir(parents=True, exist_ok=True)

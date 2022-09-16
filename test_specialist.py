@@ -84,9 +84,9 @@ def test_main_c(source: pathlib.Path, expected: pathlib.Path) -> None:
 
 
 def test_main_c_raises() -> None:
-    """$ specialist -c '42 / 0'"""
-    expected = "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;charset=utf-8'/></head><body style='background-color:white;color:black'><pre>42 / 0</pre></body></html>"  # pylint: disable = line-too-long
-    args = ["-c", "42 / 0"]
+    """$ specialist -c '[i * i for i in range(100)]; 42 / 0'"""
+    expected = "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;charset=utf-8'/></head><body style='background-color:white;color:black'><pre><span style='background-color:#d4fed4'>[</span><span style='background-color:#dafe91'>i</span><span style='background-color:#ffffb0'> * </span><span style='background-color:#dafe91'>i</span><span style='background-color:#d4fed4'> for </span><span style='background-color:#b0ffb0'>i</span><span style='background-color:#d4fed4'> in </span><span style='background-color:#dfffdf'>range</span><span style='background-color:#daffda'>(</span><span style='background-color:#ddffdd'>100</span><span style='background-color:#daffda'>)</span><span style='background-color:#d4fed4'>]</span>; 42 / 0</pre></body></html>"  # pylint: disable = line-too-long
+    args = ["-c", "[i * i for i in range(100)]; 42 / 0"]
     with specialist.patch_sys_argv(args), assert_browses(expected), pytest.raises(
         ZeroDivisionError
     ):
@@ -140,10 +140,17 @@ def test_main_m_raises_c() -> None:
 
 
 def test_main_no_location() -> None:
-    """$ specialist -c 'def g(): yield'"""
-    expected = "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;charset=utf-8'/></head><body style='background-color:white;color:black'><pre>def g(): yield</pre></body></html>"  # pylint: disable = line-too-long
-    args = ["-c", "def g(): yield"]
+    """$ specialist -c 'def g(): yield from range(100)\nlist(g())'"""
+    expected = "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;charset=utf-8'/></head><body style='background-color:white;color:black'><pre>def g(): <span style='background-color:#d4fed4'>yield from </span><span style='background-color:#ffbb76'>range</span><span style='background-color:#feda91'>(</span><span style='background-color:#ffdd99'>100</span><span style='background-color:#feda91'>)</span>\nlist(g())</pre></body></html>"  # pylint: disable = line-too-long
+    args = ["-c", "def g(): yield from range(100)\nlist(g())"]
     with specialist.patch_sys_argv(args), assert_browses(expected):
+        specialist.main()
+
+
+def test_main_o_quickened_code_found() -> None:
+    """$ specialist -c 'pass'"""
+    args = ["-c", "pass"]
+    with specialist.patch_sys_argv(args):
         specialist.main()
 
 
