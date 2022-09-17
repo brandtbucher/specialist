@@ -291,7 +291,7 @@ def view(
         writer.add(source, stats)
     if not quickened:
         stderr(
-            "No quickened code found! Try running your code longer, "
+            "No quickened code found! Try running your code for longer, "
             "or use the --targets option to analyze different source files."
         )
         return
