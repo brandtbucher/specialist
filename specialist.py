@@ -6,10 +6,10 @@ import types
 if sys.version_info < (3, 11) or sys.implementation.name != "cpython":
     raise RuntimeError("Specialist only supports CPython 3.11+!")  # pragma: no cover
 
-CODE = {}
+_code = {}
 
 
-def audit_imports(event: str, args: "typing.Sequence[object]") -> None:
+def _audit_imports(event: str, args: "typing.Sequence[object]") -> None:
     """Intercept all exec() calls and grab a reference to the code they execute.
 
     This is the only way I know of to actually get ahold of module-level code
@@ -17,11 +17,11 @@ def audit_imports(event: str, args: "typing.Sequence[object]") -> None:
     """
     match event, args:
         case "exec", [types.CodeType(co_name="<module>") as code]:
-            CODE[pathlib.Path(code.co_filename).resolve()] = code
+            _code[pathlib.Path(code.co_filename).resolve()] = code
 
 
-audit_imports.__cantrace__ = True  # type: ignore [attr-defined]
-sys.addaudithook(audit_imports)
+_audit_imports.__cantrace__ = True  # type: ignore [attr-defined]
+sys.addaudithook(_audit_imports)
 
 # pylint: disable = wrong-import-order, wrong-import-position
 import argparse
@@ -42,12 +42,12 @@ import threading
 import typing
 import webbrowser
 
-FIRST_POSTION = (1, 0)
-LAST_POSITION = (sys.maxsize, 0)
-SPECIALIZED_INSTRUCTIONS = frozenset(opcode._specialized_instructions)  # type: ignore [attr-defined] # pylint: disable = protected-access
+_FIRST_POSTION = (1, 0)
+_LAST_POSITION = (sys.maxsize, 0)
+_SPECIALIZED_INSTRUCTIONS = frozenset(opcode._specialized_instructions)  # type: ignore [attr-defined] # pylint: disable = protected-access
 
 
-class HTMLWriter:
+class _HTMLWriter:
     """Write HTML for a source code view."""
 
     def __init__(self, *, blue: bool, dark: bool) -> None:
@@ -64,7 +64,7 @@ class HTMLWriter:
             "<pre>",
         ]
 
-    def add(self, source: str, stats: "Stats") -> None:
+    def add(self, source: str, stats: "_Stats") -> None:
         """Add a chunk of code to the output."""
         color = self._color(stats)
         attribute = "color" if self._dark else "background-color"
@@ -77,7 +77,7 @@ class HTMLWriter:
         """Emit the HTML."""
         return "".join([*self._parts, "</pre></body></html>"])
 
-    def _color(self, stats: "Stats") -> str:
+    def _color(self, stats: "_Stats") -> str:
         """Compute an RGB color code for this chunk."""
         quickened = stats.specialized + stats.adaptive
         if not quickened:
@@ -96,12 +96,12 @@ class HTMLWriter:
         return f"#{int(255 * rgb[0]):02x}{int(255 * rgb[1]):02x}{int(255 * rgb[2]):02x}"
 
 
-def stderr(*args: object) -> None:
+def _stderr(*args: object) -> None:
     """Print to stdout."""
     print("specialist:", *args, file=sys.stderr, flush=True)
 
 
-def is_superinstruction(instruction: dis.Instruction) -> bool:
+def _is_superinstruction(instruction: dis.Instruction) -> bool:
     """Check if an instruction is a superinstruction."""
     opname = instruction.opname
     return "__" in opname or (
@@ -109,25 +109,25 @@ def is_superinstruction(instruction: dis.Instruction) -> bool:
     )
 
 
-def score_instruction(
+def _score_instruction(
     instruction: dis.Instruction, previous: dis.Instruction | None
-) -> "Stats":
+) -> "_Stats":
     """Score an instruction's importance."""
-    if instruction.opname in SPECIALIZED_INSTRUCTIONS:
+    if instruction.opname in _SPECIALIZED_INSTRUCTIONS:
         if instruction.opname.endswith("_ADAPTIVE"):
-            return Stats(adaptive=True)
-        return Stats(specialized=True)
+            return _Stats(adaptive=True)
+        return _Stats(specialized=True)
     if (
         previous is not None
-        and is_superinstruction(previous)
+        and _is_superinstruction(previous)
         and not instruction.is_jump_target
     ):
-        return Stats(specialized=True)
-    return Stats(unquickened=True)
+        return _Stats(specialized=True)
+    return _Stats(unquickened=True)
 
 
 @contextlib.contextmanager
-def catch_exceptions() -> typing.Generator[list[BaseException], None, None]:
+def _catch_exceptions() -> typing.Generator[list[BaseException], None, None]:
     """Suppress exceptions, and gather them into a list."""
     caught: list[BaseException] = []
     try:
@@ -137,7 +137,7 @@ def catch_exceptions() -> typing.Generator[list[BaseException], None, None]:
 
 
 @contextlib.contextmanager
-def patch_sys_argv(argv: typing.Iterable[str]) -> typing.Generator[None, None, None]:
+def _patch_sys_argv(argv: typing.Iterable[str]) -> typing.Generator[None, None, None]:
     """Patch sys.argv to simulate a command line."""
     sys_argv = sys.argv[1:]
     sys.argv[1:] = argv
@@ -147,7 +147,7 @@ def patch_sys_argv(argv: typing.Iterable[str]) -> typing.Generator[None, None, N
         sys.argv[1:] = sys_argv
 
 
-def main_file_for_module(module: str) -> pathlib.Path | None:
+def _main_file_for_module(module: str) -> pathlib.Path | None:
     """Get the main file for a module."""
     spec = importlib.util.find_spec(module)
     if spec is None:
@@ -163,26 +163,26 @@ def main_file_for_module(module: str) -> pathlib.Path | None:
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class Stats:
+class _Stats:
     """Statistics about a source chunk."""
 
     specialized: int = 0
     adaptive: int = 0
     unquickened: int = 0
 
-    def __add__(self, other: "Stats") -> "Stats":
-        if not isinstance(other, Stats):
+    def __add__(self, other: "_Stats") -> "_Stats":
+        if not isinstance(other, _Stats):
             return NotImplemented  # pragma: no cover
-        return Stats(
+        return _Stats(
             specialized=self.specialized + other.specialized,
             adaptive=self.adaptive + other.adaptive,
             unquickened=self.unquickened + other.unquickened,
         )
 
-    def __sub__(self, other: "Stats") -> "Stats":
-        if not isinstance(other, Stats):
+    def __sub__(self, other: "_Stats") -> "_Stats":
+        if not isinstance(other, _Stats):
             return NotImplemented  # pragma: no cover
-        return Stats(
+        return _Stats(
             specialized=self.specialized - other.specialized,
             adaptive=self.adaptive - other.adaptive,
             unquickened=self.unquickened - other.unquickened,
@@ -190,31 +190,31 @@ class Stats:
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class SourceChunk:
+class _SourceChunk:
     """A chunk of source code."""
 
     start: tuple[int, int]
     stop: tuple[int, int]
-    stats: Stats
+    stats: _Stats
 
 
-def walk_code(code: types.CodeType) -> typing.Generator[types.CodeType, None, None]:
+def _walk_code(code: types.CodeType) -> typing.Generator[types.CodeType, None, None]:
     """Walk a code object, yielding all of its sub-code objects."""
     yield code
     for constant in code.co_consts:
         if isinstance(constant, types.CodeType):
-            yield from walk_code(constant)
+            yield from _walk_code(constant)
 
 
-def parse(code: types.CodeType) -> typing.Generator[SourceChunk, None, None]:
+def _parse(code: types.CodeType) -> typing.Generator[_SourceChunk, None, None]:
     """Parse a code object's source code into SourceChunks."""
-    events: collections.defaultdict[tuple[int, int], Stats] = collections.defaultdict(
-        Stats
+    events: collections.defaultdict[tuple[int, int], _Stats] = collections.defaultdict(
+        _Stats
     )
-    events[FIRST_POSTION] = Stats()
-    events[LAST_POSITION] = Stats()
+    events[_FIRST_POSTION] = _Stats()
+    events[_LAST_POSITION] = _Stats()
     previous = None
-    for child in walk_code(code):
+    for child in _walk_code(code):
         # dis had an old bug in how position information is computed for CACHEs:
         fixed_positions = list(child.co_positions())
         for instruction in dis.get_instructions(child, adaptive=True):
@@ -228,22 +228,22 @@ def parse(code: types.CodeType) -> typing.Generator[SourceChunk, None, None]:
             ):
                 previous = instruction
                 continue
-            stats = score_instruction(instruction, previous)
+            stats = _score_instruction(instruction, previous)
             events[lineno, col_offset] += stats
             events[end_lineno, end_col_offset] -= stats
             previous = instruction
-    stats = Stats()
+    stats = _Stats()
     for (start, event), (stop, _) in itertools.pairwise(sorted(events.items())):
         stats += event
-        yield SourceChunk(start, stop, stats)
+        yield _SourceChunk(start, stop, stats)
 
 
-def source_and_stats(
+def _source_and_stats(
     path: pathlib.Path,
-) -> typing.Generator[tuple[str, Stats], None, None]:
+) -> typing.Generator[tuple[str, _Stats], None, None]:
     """Get the source code for a file, and its statistics."""
-    code = CODE[path]
-    parser = parse(code)
+    code = _code[path]
+    parser = _parse(code)
     chunk = next(parser, None)
     assert chunk is not None
     group: list[str] = []
@@ -270,12 +270,12 @@ def source_and_stats(
     extra_chunk = next(parser, None)
     assert extra_chunk is None or (
         extra_chunk.start == chunk.stop
-        and extra_chunk.stop == LAST_POSITION
-        and extra_chunk.stats == Stats()
+        and extra_chunk.stop == _LAST_POSITION
+        and extra_chunk.stats == _Stats()
     ), extra_chunk
 
 
-def view(
+def _view(
     path: pathlib.Path,
     *,
     blue: bool = False,
@@ -284,14 +284,14 @@ def view(
     name: str | None = None,
 ) -> None:
     """View a code object's source code."""
-    writer = HTMLWriter(blue=blue, dark=dark)
+    writer = _HTMLWriter(blue=blue, dark=dark)
     quickened = False
-    for source, stats in source_and_stats(path):
+    for source, stats in _source_and_stats(path):
         if stats.specialized or stats.adaptive:
             quickened = True
         writer.add(source, stats)
     if not quickened:
-        stderr(
+        _stderr(
             f"No quickened code found in {name or path}! Try modifying it to run "
             f"longer, or use the --targets option to analyze different source files."
         )
@@ -301,12 +301,12 @@ def view(
         out.parent.mkdir(parents=True, exist_ok=True)
         out.unlink(missing_ok=True)
         out.write_text(written)
-        stderr(path, "->", out)
+        _stderr(path, "->", out)
     else:
-        browse(written)
+        _browse(written)
 
 
-def browse(page: str) -> None:
+def _browse(page: str) -> None:
     """Open a web browser to display a page."""
 
     class RequestHandler(http.server.BaseHTTPRequestHandler):
@@ -330,7 +330,7 @@ def browse(page: str) -> None:
         thread.join()
 
 
-class Args(typing.TypedDict):
+class _Args(typing.TypedDict):
     """Command line arguments."""
 
     blue: bool
@@ -342,7 +342,7 @@ class Args(typing.TypedDict):
     file: typing.Sequence[str]
 
 
-def parse_args(args: list[str] | None = None) -> Args:
+def _parse_args(args: typing.Sequence[str]) -> _Args:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description=__doc__, add_help=False)
     options = parser.add_argument_group("Options")
@@ -399,34 +399,34 @@ def parse_args(args: list[str] | None = None) -> Args:
     parser.add_argument(
         action="extend", nargs="...", dest="file", help=argparse.SUPPRESS
     )
-    return typing.cast(Args, vars(parser.parse_args(args)))
+    return typing.cast(_Args, vars(parser.parse_args(args)))
 
 
-def main() -> None:
+def main(args: typing.Sequence[str]) -> None:
     """Run the main program."""
-    args = parse_args()
-    output = args["output"]
-    targets = args["targets"]
+    parsed = _parse_args(args)
+    output = parsed["output"]
+    targets = parsed["targets"]
     path: pathlib.Path | None
     with tempfile.TemporaryDirectory() as work:
-        match args:
+        match parsed:
             case {"command": [source, *argv], "module": [], "file": []}:
                 path = pathlib.Path(work) / "__main__.py"
                 path.write_text(source)
                 name: str | None = "the provided command"
-                with patch_sys_argv(argv), catch_exceptions() as caught:
+                with _patch_sys_argv(argv), _catch_exceptions() as caught:
                     runpy.run_path(  # pylint: disable = no-member
                         str(path), run_name="__main__"
                     )
             case {"command": [], "module": [source, *argv], "file": []}:
-                with patch_sys_argv(argv), catch_exceptions() as caught:
+                with _patch_sys_argv(argv), _catch_exceptions() as caught:
                     runpy.run_module(  # pylint: disable = no-member
                         source, run_name="__main__"
                     )
-                path = main_file_for_module(source)
+                path = _main_file_for_module(source)
                 name = source
             case {"command": [], "module": [], "file": [source, *argv]}:
-                with patch_sys_argv(argv), catch_exceptions() as caught:
+                with _patch_sys_argv(argv), _catch_exceptions() as caught:
                     runpy.run_path(  # pylint: disable = no-member
                         source, run_name="__main__"
                     )
@@ -438,12 +438,12 @@ def main() -> None:
         if targets is not None:
             name = None
             for match in pathlib.Path().glob(targets):
-                if match.resolve() in CODE:
+                if match.resolve() in _code:
                     paths.append(match.resolve())
         elif path is not None:
             paths.append(path.resolve())
         if not paths:
-            stderr("No source files found!")
+            _stderr("No source files found!")
         else:
             if output is not None:
                 common = pathlib.Path(
@@ -462,10 +462,12 @@ def main() -> None:
             else:
                 path_and_out = ((path, None) for path in paths)
             for path, out in sorted(path_and_out):
-                view(path, blue=args["blue"], dark=args["dark"], out=out, name=name)
+                _view(
+                    path, blue=parsed["blue"], dark=parsed["dark"], out=out, name=name
+                )
         if caught:
             raise caught[0] from None
 
 
 if __name__ == "__main__":  # pragma: no cover
-    main()
+    main(sys.argv[1:])

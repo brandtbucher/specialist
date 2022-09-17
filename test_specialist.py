@@ -63,25 +63,22 @@ def assert_browses(
 @pytest.mark.parametrize("source, expected", TESTS)
 def test_main(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist <source>"""
-    args = [str(source)]
-    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
-        specialist.main()
+    with assert_browses([expected.read_text()]):
+        specialist.main([str(source)])
 
 
 @pytest.mark.parametrize("source, expected", TESTS_BLUE)
 def test_main_blue(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist --blue <file>"""
-    args = ["--blue", str(source)]
-    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
-        specialist.main()
+    with assert_browses([expected.read_text()]):
+        specialist.main(["--blue", str(source)])
 
 
 @pytest.mark.parametrize("source, expected", TESTS)
 def test_main_c(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist -c ..."""
-    args = ["-c", source.read_text()]
-    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
-        specialist.main()
+    with assert_browses([expected.read_text()]):
+        specialist.main(["-c", source.read_text()])
 
 
 def test_main_c_raises() -> None:
@@ -98,57 +95,47 @@ def test_main_c_raises() -> None:
         "ffdd'>100</span><span style='background-color:#daffda'>)</span><span style='ba"
         "ckground-color:#d4fed4'>]</span>; 42 / 0</pre></body></html>"
     )
-    args = ["-c", "[i * i for i in range(100)]; 42 / 0"]
-    with specialist.patch_sys_argv(args), assert_browses([expected]), pytest.raises(
-        ZeroDivisionError
-    ):
-        specialist.main()
+    with assert_browses([expected]), pytest.raises(ZeroDivisionError):
+        specialist.main(["-c", "[i * i for i in range(100)]; 42 / 0"])
 
 
 @pytest.mark.parametrize("source, expected", TESTS_DARK)
 def test_main_dark(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist --dark <file>"""
-    args = ["--dark", str(source)]
-    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
-        specialist.main()
+    with assert_browses([expected.read_text()]):
+        specialist.main(["--dark", str(source)])
 
 
 @pytest.mark.parametrize("source, expected", TESTS_DARK_BLUE)
 def test_main_dark_blue(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist --dark --blue <file>"""
-    args = ["--dark", "--blue", str(source)]
-    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
-        specialist.main()
+    with assert_browses([expected.read_text()]):
+        specialist.main(["--dark", "--blue", str(source)])
 
 
 @pytest.mark.parametrize("source, expected", TESTS)
 def test_main_m(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist -m <source>"""
     module = ".".join(source.with_suffix("").relative_to(pathlib.Path.cwd()).parts)
-    args = ["-m", module]
-    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
-        specialist.main()
+    with assert_browses([expected.read_text()]):
+        specialist.main(["-m", module])
 
 
 def test_main_m_raises_a() -> None:
     """$ specialist -m __hello__"""
-    args = ["-m", "__hello__"]
-    with specialist.patch_sys_argv(args):
-        specialist.main()
+    specialist.main(["-m", "__hello__"])
 
 
 def test_main_m_raises_b() -> None:
     """$ specialist -m __phello__"""
-    args = ["-m", "__phello__"]
-    with specialist.patch_sys_argv(args), pytest.raises(ImportError):
-        specialist.main()
+    with pytest.raises(ImportError):
+        specialist.main(["-m", "__phello__"])
 
 
 def test_main_m_raises_c() -> None:
     """$ specialist -m __hello__"""
-    args = ["-m", "__phello__.nonexistent"]
-    with specialist.patch_sys_argv(args), pytest.raises(ImportError):
-        specialist.main()
+    with pytest.raises(ImportError):
+        specialist.main(["-m", "__phello__.nonexistent"])
 
 
 def test_main_no_location() -> None:
@@ -161,16 +148,13 @@ def test_main_no_location() -> None:
         "</span><span style='background-color:#ffdd99'>100</span><span style='backgroun"
         "d-color:#feda91'>)</span>\nlist(g())</pre></body></html>"
     )
-    args = ["-c", "def g(): yield from range(100)\nlist(g())"]
-    with specialist.patch_sys_argv(args), assert_browses([expected]):
-        specialist.main()
+    with assert_browses([expected]):
+        specialist.main(["-c", "def g(): yield from range(100)\nlist(g())"])
 
 
 def test_main_no_quickened_code_found() -> None:
     """$ specialist -c 'pass'"""
-    args = ["-c", "pass"]
-    with specialist.patch_sys_argv(args):
-        specialist.main()
+    specialist.main(["-c", "pass"])
 
 
 @pytest.mark.parametrize("source, expected", TESTS)
@@ -178,9 +162,7 @@ def test_main_output(
     source: pathlib.Path, expected: pathlib.Path, tmp_path: pathlib.Path
 ) -> None:
     """$ specialist --output <tmp_path> <source>"""
-    args = ["--output", str(tmp_path), str(source)]
-    with specialist.patch_sys_argv(args):
-        specialist.main()
+    specialist.main(["--output", str(tmp_path), str(source)])
     children = list(tmp_path.iterdir())
     assert len(children) == 1
     assert children[0].read_text() == expected.read_text()
@@ -190,16 +172,15 @@ def test_main_output(
 def test_main_targets(source: pathlib.Path, expected: pathlib.Path) -> None:
     """$ specialist --targets <source> <source>"""
     targets = source.relative_to(pathlib.Path.cwd())
-    args = ["--targets", str(targets), str(source)]
-    with specialist.patch_sys_argv(args), assert_browses([expected.read_text()]):
-        specialist.main()
+    with assert_browses([expected.read_text()]):
+        specialist.main(["--targets", str(targets), str(source)])
 
 
 def test_main_targets_output_c(tmp_path: pathlib.Path) -> None:
     """$ specialist --targets 'test-data/input/*' -c 'pass'"""
-    args = ["--targets", "test-data/input/*", "--output", str(tmp_path), "-c", "pass"]
-    with specialist.patch_sys_argv(args):
-        specialist.main()
+    specialist.main(
+        ["--targets", "test-data/input/*", "--output", str(tmp_path), "-c", "pass"]
+    )
     for actual, expected in zip(
         sorted(tmp_path.iterdir()),
         sorted((TEST_DATA / "output").glob("output-*.html")),
@@ -225,6 +206,5 @@ def test_main_package() -> None:
     module = ".".join(
         (TEST_DATA / "input-package").relative_to(pathlib.Path.cwd()).parts
     )
-    args = ["-m", module]
-    with specialist.patch_sys_argv(args), assert_browses([expected]):
-        specialist.main()
+    with assert_browses([expected]):
+        specialist.main(["-m", module])
