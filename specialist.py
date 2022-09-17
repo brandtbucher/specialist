@@ -281,18 +281,21 @@ def view(
     blue: bool = False,
     dark: bool = False,
     out: pathlib.Path | None,
+    command: bool,
 ) -> None:
     """View a code object's source code."""
     writer = HTMLWriter(blue=blue, dark=dark)
     quickened = False
     for source, stats in source_and_stats(path):
-        if not stats.unquickened:
+        if stats.specialized or stats.adaptive:
+            print(source, stats)
             quickened = True
         writer.add(source, stats)
     if not quickened:
+        where = "the provided command" if command else path
         stderr(
-            f"{path} has no quickened code! Try running it longer, or use the "
-            f"--targets option to analyze different source files."
+            f"No quickened code found in {where}! Try modifying it to run longer, "
+            f"or use the --targets option to analyze different source files."
         )
         return
     written = writer.emit()
@@ -409,11 +412,13 @@ def main() -> None:
     output = args["output"]
     targets = args["targets"]
     path: pathlib.Path | None
+    command = False
     with tempfile.TemporaryDirectory() as work:
         match args:
             case {"command": [source, *argv], "module": [], "file": []}:
                 path = pathlib.Path(work) / "__main__.py"
                 path.write_text(source)
+                command = True
                 with patch_sys_argv(argv), catch_exceptions() as caught:
                     runpy.run_path(  # pylint: disable = no-member
                         str(path), run_name="__main__"
@@ -434,6 +439,7 @@ def main() -> None:
                 assert False, args
         paths: list[pathlib.Path] = []
         if targets is not None:
+            command = False
             for match in pathlib.Path().glob(targets):
                 if match.resolve() in CODE:
                     paths.append(match.resolve())
@@ -459,7 +465,7 @@ def main() -> None:
             else:
                 path_and_out = ((path, None) for path in paths)
             for path, out in sorted(path_and_out):
-                view(path, blue=blue, dark=dark, out=out)
+                view(path, blue=blue, dark=dark, out=out, command=command)
         if caught:
             raise caught[0] from None
 
