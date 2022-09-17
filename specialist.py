@@ -405,8 +405,6 @@ def parse_args(args: list[str] | None = None) -> Args:
 def main() -> None:
     """Run the main program."""
     args = parse_args()
-    blue = args["blue"]
-    dark = args["dark"]
     output = args["output"]
     targets = args["targets"]
     path: pathlib.Path | None
@@ -415,7 +413,7 @@ def main() -> None:
             case {"command": [source, *argv], "module": [], "file": []}:
                 path = pathlib.Path(work) / "__main__.py"
                 path.write_text(source)
-                name = "the provided command"
+                name: str | None = "the provided command"
                 with patch_sys_argv(argv), catch_exceptions() as caught:
                     runpy.run_path(  # pylint: disable = no-member
                         str(path), run_name="__main__"
@@ -464,7 +462,7 @@ def main() -> None:
             else:
                 path_and_out = ((path, None) for path in paths)
             for path, out in sorted(path_and_out):
-                view(path, blue=blue, dark=dark, out=out, name=name)
+                view(path, blue=args["blue"], dark=args["dark"], out=out, name=name)
         if caught:
             raise caught[0] from None
 
