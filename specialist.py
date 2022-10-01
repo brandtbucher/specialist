@@ -104,24 +104,35 @@ def _stderr(*args: object) -> None:
 def _is_superinstruction(instruction: dis.Instruction) -> bool:
     """Check if an instruction is a superinstruction."""
     opname = instruction.opname
-    return "__" in opname or (
-        opname.startswith("COMPARE_OP_") and opname.endswith("_JUMP")
+    return (
+        "__" in opname
+        or (opname.startswith("COMPARE_OP_") and opname.endswith("_JUMP"))
+        or opname == "BINARY_OP_INPLACE_ADD_UNICODE"
     )
 
 
+def _is_superduperinstruction(instruction: dis.Instruction) -> bool:
+    """Check if an instruction is a superduperinstruction."""
+    return instruction.opname == "PRECALL_NO_KW_LIST_APPEND"
+
+
 def _score_instruction(
-    instruction: dis.Instruction, previous: dis.Instruction | None
+    instruction: dis.Instruction,
+    previous: dis.Instruction | None,
+    previous_previous: dis.Instruction | None,
 ) -> "_Stats":
-    """Score an instruction's importance."""
+    """Return stats for the given instruction."""
     if instruction.opname in _SPECIALIZED_INSTRUCTIONS:
         if instruction.opname.endswith("_ADAPTIVE"):
             return _Stats(adaptive=True)
         return _Stats(specialized=True)
     if (
-        previous is not None
-        and _is_superinstruction(previous)
-        and not instruction.is_jump_target
-    ):
+        (previous is not None and _is_superinstruction(previous))
+        or (
+            previous_previous is not None
+            and _is_superduperinstruction(previous_previous)
+        )
+    ) and not instruction.is_jump_target:
         return _Stats(specialized=True)
     return _Stats(unquickened=True)
 
@@ -213,24 +224,22 @@ def _parse(code: types.CodeType) -> typing.Generator[_SourceChunk, None, None]:
     )
     events[_FIRST_POSTION] = _Stats()
     events[_LAST_POSITION] = _Stats()
-    previous = None
+    previous_previous = previous = None
     for child in _walk_code(code):
-        # dis had an old bug in how position information is computed for CACHEs:
-        fixed_positions = list(child.co_positions())
         for instruction in dis.get_instructions(child, adaptive=True):
-            position = fixed_positions[instruction.offset // 2]
-            lineno, end_lineno, col_offset, end_col_offset = position
-            if (
-                lineno is None
-                or end_lineno is None
-                or col_offset is None
-                or end_col_offset is None
-            ):
+            if instruction.positions is None or None in instruction.positions:
+                previous_previous = previous
                 previous = instruction
                 continue
-            stats = _score_instruction(instruction, previous)
+            lineno, end_lineno, col_offset, end_col_offset = instruction.positions
+            assert lineno is not None
+            assert end_lineno is not None
+            assert col_offset is not None
+            assert end_col_offset is not None
+            stats = _score_instruction(instruction, previous, previous_previous)
             events[lineno, col_offset] += stats
             events[end_lineno, end_col_offset] -= stats
+            previous_previous = previous
             previous = instruction
     stats = _Stats()
     for (start, event), (stop, _) in itertools.pairwise(sorted(events.items())):
