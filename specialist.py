@@ -101,19 +101,25 @@ def _stderr(*args: object) -> None:
     print("specialist:", *args, file=sys.stderr, flush=True)
 
 
-def _is_superinstruction(instruction: dis.Instruction) -> bool:
+def _is_superinstruction(instruction: dis.Instruction | None) -> bool:
     """Check if an instruction is a superinstruction."""
+    if instruction is None:
+        return False
     opname = instruction.opname
     return (
         "__" in opname
         or (opname.startswith("COMPARE_OP_") and opname.endswith("_JUMP"))
         or opname == "BINARY_OP_INPLACE_ADD_UNICODE"
+        or _is_superduperinstruction(instruction)
     )
 
 
-def _is_superduperinstruction(instruction: dis.Instruction) -> bool:
+def _is_superduperinstruction(instruction: dis.Instruction | None) -> bool:
     """Check if an instruction is a superduperinstruction."""
-    return instruction.opname == "PRECALL_NO_KW_LIST_APPEND"
+    if instruction is None:
+        return False
+    opname = instruction.opname
+    return opname == "PRECALL_NO_KW_LIST_APPEND"
 
 
 def _score_instruction(
@@ -126,13 +132,7 @@ def _score_instruction(
         if instruction.opname.endswith("_ADAPTIVE"):
             return _Stats(adaptive=True)
         return _Stats(specialized=True)
-    if (
-        (previous is not None and _is_superinstruction(previous))
-        or (
-            previous_previous is not None
-            and _is_superduperinstruction(previous_previous)
-        )
-    ) and not instruction.is_jump_target:
+    if _is_superinstruction(previous) or _is_superduperinstruction(previous_previous):
         return _Stats(specialized=True)
     return _Stats(unquickened=True)
 
@@ -227,6 +227,8 @@ def _parse(code: types.CodeType) -> typing.Generator[_SourceChunk, None, None]:
     previous_previous = previous = None
     for child in _walk_code(code):
         for instruction in dis.get_instructions(child, adaptive=True):
+            if instruction.is_jump_target:
+                previous_previous = previous = None
             if instruction.positions is None or None in instruction.positions:
                 previous_previous = previous
                 previous = instruction
