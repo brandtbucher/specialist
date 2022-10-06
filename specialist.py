@@ -353,7 +353,7 @@ class _Args(typing.TypedDict):
     file: typing.Sequence[str]
 
 
-def _parse_args(args: typing.Sequence[str]) -> _Args:
+def _parse_args(args: typing.Sequence[str] | None) -> _Args:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description=__doc__, add_help=False)
     options = parser.add_argument_group("Options")
@@ -413,7 +413,7 @@ def _parse_args(args: typing.Sequence[str]) -> _Args:
     return typing.cast(_Args, vars(parser.parse_args(args)))
 
 
-def main(args: typing.Sequence[str]) -> None:
+def main(args: typing.Sequence[str] | None = None) -> None:
     """Run the main program."""
     parsed = _parse_args(args)
     output = parsed["output"]
@@ -444,7 +444,7 @@ def main(args: typing.Sequence[str]) -> None:
                 path = pathlib.Path(source)
                 name = source
             case _:  # pragma: no cover
-                assert False, args
+                assert False, parsed
         paths: list[pathlib.Path] = []
         if targets is not None:
             name = None
