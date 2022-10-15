@@ -45,6 +45,33 @@ import webbrowser
 _FIRST_POSTION = (1, 0)
 _LAST_POSITION = (sys.maxsize, 0)
 _SPECIALIZED_INSTRUCTIONS = frozenset(opcode._specialized_instructions)  # type: ignore [attr-defined] # pylint: disable = protected-access
+_SUPERDUPERINSTRUCTIONS = frozenset({"PRECALL_NO_KW_LIST_APPEND"})
+_SUPERINSTRUCTIONS = _SUPERDUPERINSTRUCTIONS | frozenset(
+    {
+        "BINARY_OP_INPLACE_ADD_UNICODE",
+        "COMPARE_OP_FLOAT_JUMP",
+        "COMPARE_OP_INT_JUMP",
+        "COMPARE_OP_STR_JUMP",
+        "LOAD_CONST__LOAD_FAST",
+        "LOAD_FAST__LOAD_CONST",
+        "LOAD_FAST__LOAD_FAST",
+        "PRECALL_BUILTIN_CLASS",
+        "PRECALL_BUILTIN_FAST_WITH_KEYWORDS",
+        "PRECALL_METHOD_DESCRIPTOR_FAST_WITH_KEYWORDS",
+        "PRECALL_NO_KW_BUILTIN_FAST",
+        "PRECALL_NO_KW_BUILTIN_O",
+        "PRECALL_NO_KW_ISINSTANCE",
+        "PRECALL_NO_KW_LEN",
+        "PRECALL_NO_KW_METHOD_DESCRIPTOR_FAST",
+        "PRECALL_NO_KW_METHOD_DESCRIPTOR_NOARGS",
+        "PRECALL_NO_KW_METHOD_DESCRIPTOR_O",
+        "PRECALL_NO_KW_STR_1",
+        "PRECALL_NO_KW_TUPLE_1",
+        "PRECALL_NO_KW_TYPE_1",
+        "STORE_FAST__LOAD_FAST",
+        "STORE_FAST__STORE_FAST",
+    }
+)
 
 
 class _HTMLWriter:
@@ -103,23 +130,12 @@ def _stderr(*args: object) -> None:
 
 def _is_superinstruction(instruction: dis.Instruction | None) -> bool:
     """Check if an instruction is a superinstruction."""
-    if instruction is None:
-        return False
-    opname = instruction.opname
-    return (
-        "__" in opname
-        or (opname.startswith("COMPARE_OP_") and opname.endswith("_JUMP"))
-        or opname == "BINARY_OP_INPLACE_ADD_UNICODE"
-        or _is_superduperinstruction(instruction)
-    )
+    return instruction is not None and instruction.opname in _SUPERINSTRUCTIONS
 
 
 def _is_superduperinstruction(instruction: dis.Instruction | None) -> bool:
     """Check if an instruction is a superduperinstruction."""
-    if instruction is None:
-        return False
-    opname = instruction.opname
-    return opname == "PRECALL_NO_KW_LIST_APPEND"
+    return instruction is not None and instruction.opname in _SUPERDUPERINSTRUCTIONS
 
 
 def _score_instruction(
@@ -128,11 +144,11 @@ def _score_instruction(
     previous_previous: dis.Instruction | None,
 ) -> "_Stats":
     """Return stats for the given instruction."""
+    if _is_superinstruction(previous) or _is_superduperinstruction(previous_previous):
+        return _Stats(specialized=True)
     if instruction.opname in _SPECIALIZED_INSTRUCTIONS:
         if instruction.opname.endswith("_ADAPTIVE"):
             return _Stats(adaptive=True)
-        return _Stats(specialized=True)
-    if _is_superinstruction(previous) or _is_superduperinstruction(previous_previous):
         return _Stats(specialized=True)
     return _Stats(unquickened=True)
 
