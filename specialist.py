@@ -124,7 +124,7 @@ class _HTMLWriter:
 
 
 def _stderr(*args: object) -> None:
-    """Print to stdout."""
+    """Print to stderr."""
     print("specialist:", *args, file=sys.stderr, flush=True)
 
 
@@ -138,18 +138,27 @@ def _is_superduperinstruction(instruction: dis.Instruction | None) -> bool:
     return instruction is not None and instruction.opname in _SUPERDUPERINSTRUCTIONS
 
 
+def _adaptive_counter_value(instruction: dis.Instruction, raw_bytecode: bytes) -> int:
+    """Get the value of the adaptive counter for this instruction."""
+    next_code_unit = raw_bytecode[instruction.offset + 2 : instruction.offset + 4]
+    counter = int.from_bytes(next_code_unit, sys.byteorder)
+    return counter >> 4
+
+
 def _score_instruction(
     instruction: dis.Instruction,
     previous: dis.Instruction | None,
     previous_previous: dis.Instruction | None,
+    raw_bytecode: bytes,
 ) -> "_Stats":
     """Return stats for the given instruction."""
     if _is_superinstruction(previous) or _is_superduperinstruction(previous_previous):
         return _Stats(specialized=True)
     if instruction.opname in _SPECIALIZED_INSTRUCTIONS:
-        if instruction.opname.endswith("_ADAPTIVE"):
+        if not instruction.opname.endswith("_ADAPTIVE"):
+            return _Stats(specialized=True)
+        if _adaptive_counter_value(instruction, raw_bytecode):
             return _Stats(adaptive=True)
-        return _Stats(specialized=True)
     return _Stats(unquickened=True)
 
 
@@ -242,6 +251,7 @@ def _parse(code: types.CodeType) -> typing.Generator[_SourceChunk, None, None]:
     events[_LAST_POSITION] = _Stats()
     previous_previous = previous = None
     for child in _walk_code(code):
+        raw_bytecode = child._co_code_adaptive  # type: ignore [attr-defined]  # pylint: disable = protected-access
         for instruction in dis.get_instructions(child, adaptive=True):
             if instruction.is_jump_target:
                 previous_previous = previous = None
@@ -254,7 +264,9 @@ def _parse(code: types.CodeType) -> typing.Generator[_SourceChunk, None, None]:
             assert end_lineno is not None
             assert col_offset is not None
             assert end_col_offset is not None
-            stats = _score_instruction(instruction, previous, previous_previous)
+            stats = _score_instruction(
+                instruction, previous, previous_previous, raw_bytecode
+            )
             events[lineno, col_offset] += stats
             events[end_lineno, end_col_offset] -= stats
             previous_previous = previous

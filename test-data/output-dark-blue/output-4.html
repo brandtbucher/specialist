@@ -2,25 +2,25 @@
 
 def f_to_c(f: float) -&gt; float:
     &quot;&quot;&quot;Convert Fahrenheit to Celsius.&quot;&quot;&quot;
-    <span style='color:#b6b6ff'>x</span> = <span style='color:#ff7ffe'>f</span><span style='color:#ffb6b6'> - </span><span style='color:#ff7ffe'>32.0</span>
-    return <span style='color:#fe8dfe'>x</span><span style='color:#ffbfbf'> * (</span><span style='color:#fe8dfe'>5 / 9</span><span style='color:#ffbfbf'>)</span>
+    <span style='color:#b6b6ff'>x</span> = <span style='color:#7f7fff'>f</span><span style='color:#b6b6ff'> - </span><span style='color:#7f7fff'>32.0</span>
+    return <span style='color:#8d8dfe'>x</span><span style='color:#bfbfff'> * (</span><span style='color:#8d8dfe'>5 / 9</span><span style='color:#bfbfff'>)</span>
 
 def c_to_f(c: float) -&gt; float:
     &quot;&quot;&quot;Convert Celsius to Fahrenheit.&quot;&quot;&quot;
-    <span style='color:#b6b6ff'>x</span> = <span style='color:#ff7ffe'>c</span><span style='color:#ffb6b6'> * (</span><span style='color:#ff7ffe'>9 / 5</span><span style='color:#ffb6b6'>)</span>
-    return <span style='color:#fe8dfe'>x</span><span style='color:#ffbfbf'> + </span><span style='color:#fe8dfe'>32.0</span>
+    <span style='color:#b6b6ff'>x</span> = <span style='color:#7f7fff'>c</span><span style='color:#b6b6ff'> * (</span><span style='color:#7f7fff'>9 / 5</span><span style='color:#b6b6ff'>)</span>
+    return <span style='color:#8d8dfe'>x</span><span style='color:#bfbfff'> + </span><span style='color:#8d8dfe'>32.0</span>
 
 TEST_VALUES = [-459.67, -273.15, 0.0, 32.0, 42.0, 273.15, 100.0, 212.0, 373.15]
 
 def test_conversions() -&gt; None:
-    for t in <span style='color:#ffc6c6'>TEST_VALUES</span>:
-        <span style='color:#ff62b0'>assert_round_trip</span><span style='color:#ff7fd4'>(</span><span style='color:#fe89d7'>t</span><span style='color:#ff7fd4'>)</span>
+    for t in TEST_VALUES:
+        <span style='color:#6262ff'>assert_round_trip</span><span style='color:#7f7fff'>(</span><span style='color:#8989fe'>t</span><span style='color:#7f7fff'>)</span>
 
 def assert_round_trip(t: float) -&gt; None:
     # Round-trip Fahrenheit through Celsius:
-    <span style='color:#ffa2a2'>assert </span><span style='color:#ff3232'>math</span><span style='color:#fe4848'>.isclose</span><span style='color:#ff6262'>(</span><span style='color:#ff6d6d'>t</span><span style='color:#ff6262'>, </span><span style='color:#ff1f1f'>f_to_c</span><span style='color:#ff3232'>(</span><span style='color:#ff0000'>c_to_f</span><span style='color:#fe0f0f'>(</span><span style='color:#ff1c1c'>t</span><span style='color:#fe0f0f'>)</span><span style='color:#ff3232'>)</span><span style='color:#ff6262'>)</span><span style='color:#ffa2a2'>, </span><span style='color:#ffb6b6'>f&quot;{</span><span style='color:#ffbbbb'>t</span><span style='color:#ffb6b6'>} F -&gt; C -&gt; F failed!&quot;</span>
+    assert <span style='color:#7676ff'>math</span><span style='color:#9191fe'>.isclose</span><span style='color:#b0b0ff'>(</span><span style='color:#b6b6ff'>t</span><span style='color:#b0b0ff'>, </span><span style='color:#5f5fff'>f_to_c</span><span style='color:#7676ff'>(</span><span style='color:#3838ff'>c_to_f</span><span style='color:#4b4bfe'>(</span><span style='color:#5555fe'>t</span><span style='color:#4b4bfe'>)</span><span style='color:#7676ff'>)</span><span style='color:#b0b0ff'>)</span>, f&quot;{t} F -&gt; C -&gt; F failed!&quot;
     # Round-trip Celsius through Fahrenheit:
-    <span style='color:#ffb0b0'>assert </span><span style='color:#fe4b4b'>math</span><span style='color:#ff5f5f'>.isclose</span><span style='color:#ff7676'>(</span><span style='color:#ff7f7f'>t</span><span style='color:#ff7676'>, </span><span style='color:#ff3838'>c_to_f</span><span style='color:#fe4b4b'>(</span><span style='color:#ff1919'>f_to_c</span><span style='color:#ff2828'>(</span><span style='color:#ff3232'>t</span><span style='color:#ff2828'>)</span><span style='color:#fe4b4b'>)</span><span style='color:#ff7676'>)</span><span style='color:#ffb0b0'>, </span><span style='color:#ffbfbf'>f&quot;{</span><span style='color:#ffc3c3'>t</span><span style='color:#ffbfbf'>} C -&gt; F -&gt; C failed!&quot;</span>
+    assert <span style='color:#8686ff'>math</span><span style='color:#9f9fff'>.isclose</span><span style='color:#bbbbff'>(</span><span style='color:#bfbfff'>t</span><span style='color:#bbbbff'>, </span><span style='color:#7171ff'>c_to_f</span><span style='color:#8686ff'>(</span><span style='color:#4c4cfe'>f_to_c</span><span style='color:#5d5dfe'>(</span><span style='color:#6565ff'>t</span><span style='color:#5d5dfe'>)</span><span style='color:#8686ff'>)</span><span style='color:#bbbbff'>)</span>, f&quot;{t} C -&gt; F -&gt; C failed!&quot;
 
 if __name__ == &quot;__main__&quot;:
     test_conversions()
