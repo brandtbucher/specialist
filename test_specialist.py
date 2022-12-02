@@ -184,6 +184,34 @@ def test_main_no_quickened_code_found() -> None:
     no_trace_main(["-c", "pass"])
 
 
+@pytest.mark.parametrize("source", [source for source, _ in TESTS])
+def test_main_no_quickened_code_found_suggestion(source: pathlib.Path) -> None:
+    """$ specialist -m run"""
+    no_trace_main(
+        ["-c", f'import runpy; runpy.run_path("{source}", run_name="__main__")']
+    )
+
+
+def test_main_no_quickened_code_found_suggestions() -> None:
+    """$ specialist -m run"""
+    lines = ["import runpy"]
+    lines.extend(
+        f'runpy.run_path("{source}", run_name="__main__")' for source, _ in TESTS
+    )
+    no_trace_main(["-c", "\n".join(lines)])
+
+
+def test_main_no_quickened_code_found_suggestions_deep() -> None:
+    """$ specialist -m run"""
+    input_package = TEST_DATA / "input-package"
+    lines = ["import runpy"]
+    lines.append(f'runpy.run_path("{input_package}", run_name="__main__")')
+    lines.extend(
+        f'runpy.run_path("{source}", run_name="__main__")' for source, _ in TESTS
+    )
+    no_trace_main(["-c", "\n".join(lines)])
+
+
 @pytest.mark.parametrize("source, expected", TESTS)
 def test_main_output(
     source: pathlib.Path, expected: pathlib.Path, tmp_path: pathlib.Path
@@ -205,8 +233,19 @@ def test_main_targets(source: pathlib.Path, expected: pathlib.Path) -> None:
 
 def test_main_targets_output_c(tmp_path: pathlib.Path) -> None:
     """$ specialist --targets 'test-data/input/*' -c 'pass'"""
+    lines = ["import runpy"]
+    lines.extend(
+        f'runpy.run_path("{source}", run_name="__main__")' for source, _ in TESTS
+    )
     no_trace_main(
-        ["--targets", "test-data/input/*", "--output", str(tmp_path), "-c", "pass"]
+        [
+            "--targets",
+            "test-data/input/*",
+            "--output",
+            str(tmp_path),
+            "-c",
+            "\n".join(lines),
+        ]
     )
     for actual, expected in zip(
         sorted(tmp_path.iterdir()),

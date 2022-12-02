@@ -37,6 +37,8 @@ import itertools
 import opcode
 import os
 import runpy
+import shlex
+import sysconfig
 import tempfile
 import threading
 import typing
@@ -72,6 +74,12 @@ _SUPERINSTRUCTIONS = _SUPERDUPERINSTRUCTIONS | frozenset(
         "STORE_FAST__STORE_FAST",
     }
 )
+_LIB = pathlib.Path(
+    os.path.commonpath([sysconfig.get_path("stdlib"), sysconfig.get_path("purelib")])
+).resolve()
+assert _LIB.is_dir()
+_TMP = pathlib.Path(tempfile.gettempdir()).resolve()
+assert _TMP.is_dir()
 
 
 class _HTMLWriter:
@@ -195,7 +203,7 @@ def _main_file_for_module(module: str) -> pathlib.Path | None:
     if not spec.has_location:
         return None
     assert spec.origin is not None
-    return pathlib.Path(spec.origin)
+    return pathlib.Path(spec.origin).resolve()
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -321,7 +329,7 @@ def _view(
     dark: bool = False,
     out: pathlib.Path | None = None,
     name: str | None = None,
-) -> None:
+) -> bool:
     """View a code object's source code."""
     writer = _HTMLWriter(blue=blue, dark=dark)
     quickened = False
@@ -334,7 +342,7 @@ def _view(
             f"No quickened code found in {name or path}! Try modifying it to run "
             f"longer, or use the --targets option to analyze different source files."
         )
-        return
+        return False
     written = writer.emit()
     if out is not None:
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -343,6 +351,37 @@ def _view(
         _stderr(path, "->", out)
     else:
         _browse(written)
+    return True
+
+
+def _suggest_target_glob(args: typing.Sequence[str]) -> None:
+    """Suggest possible glob patterns for targets."""
+    paths = [
+        path
+        for path in _code
+        # Also filter these for containing quickend code?
+        if path.is_file() and _TMP not in path.parents and _LIB not in path.parents
+    ]
+    if not paths:
+        return
+    if len(paths) == 1:
+        glob = paths[0]
+    else:
+        common = pathlib.Path(os.path.commonpath(paths)).resolve()
+        assert common.is_dir()
+        assert _LIB not in common.parents
+        if common in _LIB.parents:
+            return  # pragma: no cover
+        longest = max(len(path.parts) for path in paths)
+        if len(common.parts) == longest - 1:
+            glob = common / "*"
+        else:
+            glob = common / "**" / "*"
+    cwd = pathlib.Path.cwd().resolve()
+    if glob.is_relative_to(cwd):  # pragma: no cover
+        glob = glob.relative_to(cwd)
+    suggestion = shlex.join(["--targets", str(glob), *args])
+    _stderr(f"Did you mean {suggestion}?")
 
 
 def _browse(page: str) -> None:
@@ -445,13 +484,12 @@ def main(args: typing.Sequence[str] | None = None) -> None:
     """Run the main program."""
     parsed = _parse_args(args)
     output = parsed["output"]
-    targets = parsed["targets"]
     path: pathlib.Path | None
     with tempfile.TemporaryDirectory() as work:
         match parsed:
             case {"command": [source, *argv], "module": [], "file": []}:
-                path = pathlib.Path(work) / "__main__.py"
-                path.write_text(source)
+                path = pathlib.Path(work, "__main__.py").resolve()
+                path.write_text(source, encoding="utf-8")
                 name: str | None = "the provided command"
                 with _patch_sys_argv(argv), _catch_exceptions() as caught:
                     runpy.run_path(  # pylint: disable = no-member
@@ -469,18 +507,18 @@ def main(args: typing.Sequence[str] | None = None) -> None:
                     runpy.run_path(  # pylint: disable = no-member
                         source, run_name="__main__"
                     )
-                path = pathlib.Path(source)
+                path = pathlib.Path(source).resolve()
                 name = source
             case _:  # pragma: no cover
                 assert False, parsed
         paths: list[pathlib.Path] = []
-        if targets is not None:
+        if parsed["targets"] is not None:
             name = None
-            for match in pathlib.Path().glob(targets):
+            for match in pathlib.Path().resolve().glob(parsed["targets"]):
                 if match.resolve() in _code:
                     paths.append(match.resolve())
-        elif path is not None:
-            paths.append(path.resolve())
+        elif path is not None and path in _code:
+            paths.append(path)
         if not paths:
             _stderr("No source files found!")
         else:
@@ -500,10 +538,13 @@ def main(args: typing.Sequence[str] | None = None) -> None:
                 )
             else:
                 path_and_out = ((path, None) for path in paths)
+            found = False
             for path, out in sorted(path_and_out):
-                _view(
+                found |= _view(
                     path, blue=parsed["blue"], dark=parsed["dark"], out=out, name=name
                 )
+            if not found and not parsed["targets"]:
+                _suggest_target_glob(args or sys.argv[1:])
         if caught:
             raise caught[0] from None
 
