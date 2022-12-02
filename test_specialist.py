@@ -186,14 +186,14 @@ def test_main_no_quickened_code_found() -> None:
 
 @pytest.mark.parametrize("source", [source for source, _ in TESTS])
 def test_main_no_quickened_code_found_suggestion(source: pathlib.Path) -> None:
-    """$ specialist -m run"""
+    """$ specialist -c ..."""
     no_trace_main(
         ["-c", f'import runpy; runpy.run_path("{source}", run_name="__main__")']
     )
 
 
 def test_main_no_quickened_code_found_suggestions() -> None:
-    """$ specialist -m run"""
+    """$ specialist -c ..."""
     lines = ["import runpy"]
     lines.extend(
         f'runpy.run_path("{source}", run_name="__main__")' for source, _ in TESTS
@@ -202,7 +202,7 @@ def test_main_no_quickened_code_found_suggestions() -> None:
 
 
 def test_main_no_quickened_code_found_suggestions_deep() -> None:
-    """$ specialist -m run"""
+    """$ specialist -c ..."""
     input_package = TEST_DATA / "input-package"
     lines = ["import runpy"]
     lines.append(f'runpy.run_path("{input_package}", run_name="__main__")')
@@ -221,6 +221,12 @@ def test_main_output(
     children = list(tmp_path.iterdir())
     assert len(children) == 1
     assert children[0].read_text() == expected.read_text()
+
+
+@pytest.mark.parametrize("source", [source for source, _ in TESTS])
+def test_main_targets_missing(source: pathlib.Path) -> None:
+    """$ specialist --targets XXX <source>"""
+    no_trace_main(["--targets", "XXX", str(source)])
 
 
 @pytest.mark.parametrize("source, expected", TESTS)
