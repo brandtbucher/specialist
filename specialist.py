@@ -74,12 +74,12 @@ _SUPERINSTRUCTIONS = _SUPERDUPERINSTRUCTIONS | frozenset(
         "STORE_FAST__STORE_FAST",
     }
 )
-_LIB = pathlib.Path(
-    os.path.commonpath([sysconfig.get_path("stdlib"), sysconfig.get_path("purelib")])
-).resolve()
-assert _LIB.is_dir()
+_PURELIB = pathlib.Path(sysconfig.get_path("purelib")).resolve()
+assert _PURELIB.is_dir(), _PURELIB
+_STDLIB = pathlib.Path(sysconfig.get_path("stdlib")).resolve()
+assert _STDLIB.is_dir(), _STDLIB
 _TMP = pathlib.Path(tempfile.gettempdir()).resolve()
-assert _TMP.is_dir()
+assert _TMP.is_dir(), _TMP
 
 
 class _HTMLWriter:
@@ -360,17 +360,30 @@ def _suggest_target_glob(args: typing.Sequence[str]) -> None:
         path
         for path in _code
         # Also filter these for containing quickend code?
-        if path.is_file() and _TMP not in path.parents and _LIB not in path.parents
+        if path.is_file()
+        and _PURELIB not in path.parents
+        and _STDLIB not in path.parents
+        and _TMP not in path.parents
     ]
     if not paths:
         return
     if len(paths) == 1:
         glob = paths[0]
     else:
-        common = pathlib.Path(os.path.commonpath(paths)).resolve()
+        try:
+            common = pathlib.Path(os.path.commonpath(paths)).resolve()
+        except ValueError:  # pragma: no cover
+            # Different drives on Windows:
+            return
         assert common.is_dir()
-        assert _LIB not in common.parents
-        if common in _LIB.parents:
+        assert _PURELIB not in common.parents, common
+        assert _STDLIB not in common.parents, common
+        assert _TMP not in common.parents, common
+        if (
+            common in _PURELIB.parents
+            or common in _STDLIB.parents
+            or common in _TMP.parents
+        ):
             return  # pragma: no cover
         longest = max(len(path.parts) for path in paths)
         if len(common.parts) == longest - 1:
@@ -480,7 +493,9 @@ def _parse_args(args: typing.Sequence[str] | None) -> _Args:
     return typing.cast(_Args, vars(parser.parse_args(args)))
 
 
-def main(args: typing.Sequence[str] | None = None) -> None:
+def main(  # pylint: disable = too-many-branches
+    args: typing.Sequence[str] | None = None,
+) -> None:
     """Run the main program."""
     parsed = _parse_args(args)
     output = parsed["output"]
@@ -523,9 +538,13 @@ def main(args: typing.Sequence[str] | None = None) -> None:
             _stderr("No source files found!")
         else:
             if output is not None:
-                common = pathlib.Path(
-                    os.path.commonpath(paths)  # pylint: disable = no-member
-                ).resolve()
+                try:
+                    common = pathlib.Path(os.path.commonpath(paths)).resolve()
+                except ValueError:  # pragma: no cover
+                    _stderr("Unable to resolve source files (different drives)!")
+                    if caught:
+                        raise caught[0] from None
+                    return
                 if common.is_file():
                     common = common.parent
                 assert common.is_dir(), common
