@@ -191,6 +191,17 @@ def _patch_sys_argv(argv: typing.Iterable[str]) -> typing.Generator[None, None, 
         sys.argv[1:] = sys_argv
 
 
+@contextlib.contextmanager
+def _insert_sys_path(path: pathlib.Path) -> typing.Generator[None, None, None]:
+    """Patch sys.path to simulate a normal python execution."""
+    sys_path = sys.path[:]
+    sys.path.insert(0, str(path))
+    try:
+        yield
+    finally:
+        sys.path[:] = sys_path
+
+
 def _main_file_for_module(module: str) -> pathlib.Path | None:
     """Get the main file for a module."""
     spec = importlib.util.find_spec(module)
@@ -322,6 +333,12 @@ def _source_and_stats(
     ), extra_chunk
 
 
+def _is_quickened(code: types.CodeType) -> bool:
+    return any(  # pragma: no cover
+        chunk.stats.specialized or chunk.stats.adaptive for chunk in _parse(code)
+    )
+
+
 def _view(
     path: pathlib.Path,
     *,
@@ -358,12 +375,12 @@ def _suggest_target_glob(args: typing.Sequence[str]) -> None:
     """Suggest possible glob patterns for targets."""
     paths = [
         path
-        for path in _code
-        # Also filter these for containing quickend code?
+        for path, code in _code.items()
         if path.is_file()
         and _PURELIB not in path.parents
         and _STDLIB not in path.parents
         and _TMP not in path.parents
+        and _is_quickened(code)
     ]
     if not paths:
         return
@@ -511,14 +528,22 @@ def main(  # pylint: disable = too-many-branches
                         str(path), run_name="__main__"
                     )
             case {"command": [], "module": [source, *argv], "file": []}:
-                with _patch_sys_argv(argv), _catch_exceptions() as caught:
+                with (
+                    _patch_sys_argv(argv),
+                    _insert_sys_path(pathlib.Path().resolve()),
+                    _catch_exceptions() as caught,
+                ):
+                    path = _main_file_for_module(source)
                     runpy.run_module(  # pylint: disable = no-member
-                        source, run_name="__main__"
+                        source, run_name="__main__", alter_sys=True
                     )
-                path = _main_file_for_module(source)
                 name = source
             case {"command": [], "module": [], "file": [source, *argv]}:
-                with _patch_sys_argv(argv), _catch_exceptions() as caught:
+                with (
+                    _patch_sys_argv(argv),
+                    _insert_sys_path(pathlib.Path(source).parent.resolve()),
+                    _catch_exceptions() as caught,
+                ):
                     runpy.run_path(  # pylint: disable = no-member
                         source, run_name="__main__"
                     )
