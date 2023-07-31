@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta http-equiv='content-type' content='text/html;charset=utf-8'/></head><body style='background-color:black;color:white'><pre>def encode_decode(key: str, text: str) -&gt; str:
+    out = []
+    <span style='color:#fecccc'>for </span><span style='color:#d47fff'>i</span><span style='color:#ffa2fe'>, </span><span style='color:#d47fff'>t</span><span style='color:#fecccc'> in </span><span style='color:#d47fff'>enumerate</span><span style='color:#ffa2fe'>(</span><span style='color:#ffaaff'>text</span><span style='color:#ffa2fe'>)</span><span style='color:#fecccc'>:
+        </span><span style='color:#ffa2fe'>k</span><span style='color:#fecccc'> = </span><span style='color:#ffaaff'>key</span><span style='color:#ffd0d0'>[</span><span style='color:#ffb0ff'>i</span><span style='color:#fed4d4'> % </span><span style='color:#da91fe'>len</span><span style='color:#ffb0ff'>(</span><span style='color:#ffb6ff'>key</span><span style='color:#ffb0ff'>)</span><span style='color:#ffd0d0'>]</span><span style='color:#fecccc'>
+        </span><span style='color:#ba76ff'>out</span><span style='color:#da91fe'>.append</span><span style='color:#ffb0ff'>(</span><span style='color:#ba76ff'>chr</span><span style='color:#da91fe'>(</span><span style='color:#a569ff'>ord</span><span style='color:#bf7fff'>(</span><span style='color:#c386ff'>t</span><span style='color:#bf7fff'>)</span><span style='color:#dd99ff'> ^ </span><span style='color:#a569ff'>ord</span><span style='color:#bf7fff'>(</span><span style='color:#c386ff'>k</span><span style='color:#bf7fff'>)</span><span style='color:#da91fe'>)</span><span style='color:#ffb0ff'>)</span>
+    return <span style='color:#a2a2ff'>&quot;&quot;</span><span style='color:#9999ff'>.join</span><span style='color:#c6c6ff'>(</span><span style='color:#ccccfe'>out</span><span style='color:#c6c6ff'>)</span>
+
+if __name__ == &quot;__main__&quot;:
+    key = &quot;Spam&quot;
+    text = &quot;Hello, world!&quot;
+    encoded = encode_decode(key, text)
+    decoded = encode_decode(key, encoded)
+    assert decoded == text
+</pre></body></html>

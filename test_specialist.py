@@ -11,12 +11,14 @@ import pytest
 
 import specialist
 
+OUTPUT_PATTERN = f"output-*-{sys.version_info[0]}-{sys.version_info[1]}.html"
+
 TEST_DATA = pathlib.Path(__file__).parent / "test-data"
 
 TESTS = list(
     zip(
         sorted((TEST_DATA / "input").glob("input-*.py")),
-        sorted((TEST_DATA / "output").glob("output-*.html")),
+        sorted((TEST_DATA / "output").glob(OUTPUT_PATTERN)),
         strict=True,
     )
 )
@@ -24,7 +26,7 @@ TESTS = list(
 TESTS_BLUE = list(
     zip(
         sorted((TEST_DATA / "input").glob("input-*.py")),
-        sorted((TEST_DATA / "output-blue").glob("output-*.html")),
+        sorted((TEST_DATA / "output-blue").glob(OUTPUT_PATTERN)),
         strict=True,
     )
 )
@@ -32,7 +34,7 @@ TESTS_BLUE = list(
 TESTS_DARK = list(
     zip(
         sorted((TEST_DATA / "input").glob("input-*.py")),
-        sorted((TEST_DATA / "output-dark").glob("output-*.html")),
+        sorted((TEST_DATA / "output-dark").glob(OUTPUT_PATTERN)),
         strict=True,
     )
 )
@@ -40,7 +42,7 @@ TESTS_DARK = list(
 TESTS_DARK_BLUE = list(
     zip(
         sorted((TEST_DATA / "input").glob("input-*.py")),
-        sorted((TEST_DATA / "output-dark-blue").glob("output-*.html")),
+        sorted((TEST_DATA / "output-dark-blue").glob(OUTPUT_PATTERN)),
         strict=True,
     )
 )
@@ -128,14 +130,14 @@ def test_main_c_raises() -> None:
         expected = (
             "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
             "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
-            "'><pre><span style='background-color:#d4fed4'>[</span><span style='backgro"
+            "'><pre><span style='background-color:#ccfecc'>[</span><span style='backgro"
             "und-color:#91fe91'>i</span><span style='background-color:#b0ffb0'> * </spa"
             "n><span style='background-color:#91fe91'>i</span><span style='background-c"
-            "olor:#d4fed4'> for </span><span style='background-color:#b0ffb0'>i</span><"
-            "span style='background-color:#d4fed4'> in </span><span style='background-c"
-            "olor:#dfffdf'>range</span><span style='background-color:#daffda'>(</span><"
-            "span style='background-color:#ddffdd'>100</span><span style='background-co"
-            "lor:#daffda'>)</span><span style='background-color:#d4fed4'>]</span>; 42 /"
+            "olor:#ccfecc'> for </span><span style='background-color:#a2ffa2'>i</span><"
+            "span style='background-color:#ccfecc'> in </span><span style='background-c"
+            "olor:#d7ffd7'>range</span><span style='background-color:#d0ffd0'>(</span><"
+            "span style='background-color:#d4fed4'>100</span><span style='background-co"
+            "lor:#d0ffd0'>)</span><span style='background-color:#ccfecc'>]</span>; 42 /"
             " 0</pre></body></html>"
         )
     with assert_browses([expected]), pytest.raises(ZeroDivisionError):
@@ -197,10 +199,10 @@ def test_main_no_location() -> None:
         expected = (
             "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
             "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
-            "'><pre>def g(): <span style='background-color:#d4fed4'>yield from </span><"
-            "span style='background-color:#ddffdd'>range</span><span style='background-"
-            "color:#daffda'>(</span><span style='background-color:#ddffdd'>100</span><s"
-            "pan style='background-color:#daffda'>)</span>\nlist(g())</pre></body></htm"
+            "'><pre>def g(): <span style='background-color:#ffd7d7'>yield from </span><"
+            "span style='background-color:#ffdddd'>range</span><span style='background-"
+            "color:#ffdada'>(</span><span style='background-color:#ffdddd'>100</span><s"
+            "pan style='background-color:#ffdada'>)</span>\nlist(g())</pre></body></htm"
             "l>"
         )
     with assert_browses([expected]):
@@ -283,7 +285,7 @@ def test_main_targets_output_c(tmp_path: pathlib.Path) -> None:
     )
     for actual, expected in zip(
         sorted(tmp_path.iterdir()),
-        sorted((TEST_DATA / "output").glob("output-*.html")),
+        sorted((TEST_DATA / "output").glob(OUTPUT_PATTERN)),
         strict=True,
     ):
         assert actual.read_text() == expected.read_text()
@@ -309,14 +311,14 @@ def test_main_package() -> None:
         expected = (
             "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
             "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
-            "'><pre><span style='background-color:#daffda'>[</span><span style='backgro"
-            "und-color:#9fff9f'>i</span><span style='background-color:#bbffbb'> * </spa"
-            "n><span style='background-color:#9fff9f'>i</span><span style='background-c"
-            "olor:#daffda'> for </span><span style='background-color:#bbffbb'>i</span><"
-            "span style='background-color:#daffda'> in </span><span style='background-c"
-            "olor:#e2ffe2'>range</span><span style='background-color:#dfffdf'>(</span><"
-            "span style='background-color:#e1ffe1'>100</span><span style='background-co"
-            "lor:#dfffdf'>)</span><span style='background-color:#daffda'>]</span>\n</pr"
+            "'><pre><span style='background-color:#d0ffd0'>[</span><span style='backgro"
+            "und-color:#99ff99'>i</span><span style='background-color:#b6ffb6'> * </spa"
+            "n><span style='background-color:#99ff99'>i</span><span style='background-c"
+            "olor:#d0ffd0'> for </span><span style='background-color:#aaffaa'>i</span><"
+            "span style='background-color:#d0ffd0'> in </span><span style='background-c"
+            "olor:#daffda'>range</span><span style='background-color:#d4fed4'>(</span><"
+            "span style='background-color:#d7ffd7'>100</span><span style='background-co"
+            "lor:#d4fed4'>)</span><span style='background-color:#d0ffd0'>]</span>\n</pr"
             "e></body></html>"
         )
     module = ".".join(

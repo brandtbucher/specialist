@@ -46,7 +46,7 @@ import webbrowser
 
 _FIRST_POSTION = (1, 0)
 _LAST_POSITION = (sys.maxsize, 0)
-_SPECIALIZATIONS = frozenset(opcode._specializations)  # type: ignore [attr-defined] # pylint: disable = protected-access
+_CACHE_FORMAT = frozenset(opcode._cache_format)  # type: ignore [attr-defined] # pylint: disable = protected-access
 _SPECIALIZED_INSTRUCTIONS = frozenset(opcode._specialized_instructions)  # type: ignore [attr-defined] # pylint: disable = protected-access
 _SUPERDUPERINSTRUCTIONS = frozenset({"PRECALL_NO_KW_LIST_APPEND"})
 _SUPERINSTRUCTIONS = _SUPERDUPERINSTRUCTIONS | frozenset(
@@ -172,9 +172,11 @@ def _score_instruction(
             if any(_adaptive_counter_value(instruction, raw_bytecode)):
                 return _Stats(adaptive=True)
     else:  # pragma: no cover
-        if instruction.opname in _SPECIALIZATIONS:
+        if instruction.opname in _SPECIALIZED_INSTRUCTIONS:
             return _Stats(specialized=True)
-        if _adaptive_counter_value(instruction, raw_bytecode) > (1, 1):
+        if instruction.opname in _CACHE_FORMAT and _adaptive_counter_value(
+            instruction, raw_bytecode
+        ) > (1, 1):
             return _Stats(adaptive=True)
     return _Stats(unquickened=True)
 
