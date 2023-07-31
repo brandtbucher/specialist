@@ -46,6 +46,7 @@ import webbrowser
 
 _FIRST_POSTION = (1, 0)
 _LAST_POSITION = (sys.maxsize, 0)
+_SPECIALIZATIONS = frozenset(opcode._specializations)  # type: ignore [attr-defined] # pylint: disable = protected-access
 _SPECIALIZED_INSTRUCTIONS = frozenset(opcode._specialized_instructions)  # type: ignore [attr-defined] # pylint: disable = protected-access
 _SUPERDUPERINSTRUCTIONS = frozenset({"PRECALL_NO_KW_LIST_APPEND"})
 _SUPERINSTRUCTIONS = _SUPERDUPERINSTRUCTIONS | frozenset(
@@ -146,11 +147,13 @@ def _is_superduperinstruction(instruction: dis.Instruction | None) -> bool:
     return instruction is not None and instruction.opname in _SUPERDUPERINSTRUCTIONS
 
 
-def _adaptive_counter_value(instruction: dis.Instruction, raw_bytecode: bytes) -> int:
+def _adaptive_counter_value(
+    instruction: dis.Instruction, raw_bytecode: bytes
+) -> tuple[int, int]:
     """Get the value of the adaptive counter for this instruction."""
     next_code_unit = raw_bytecode[instruction.offset + 2 : instruction.offset + 4]
     counter = int.from_bytes(next_code_unit, sys.byteorder)
-    return counter >> 4
+    return counter >> 4, counter & 0b1111
 
 
 def _score_instruction(
@@ -162,10 +165,16 @@ def _score_instruction(
     """Return stats for the given instruction."""
     if _is_superinstruction(previous) or _is_superduperinstruction(previous_previous):
         return _Stats(specialized=True)
-    if instruction.opname in _SPECIALIZED_INSTRUCTIONS:
-        if not instruction.opname.endswith("_ADAPTIVE"):
+    if sys.version_info < (3, 12):  # pragma: no cover
+        if instruction.opname in _SPECIALIZED_INSTRUCTIONS:
+            if not instruction.opname.endswith("_ADAPTIVE"):
+                return _Stats(specialized=True)
+            if any(_adaptive_counter_value(instruction, raw_bytecode)):
+                return _Stats(adaptive=True)
+    else:  # pragma: no cover
+        if instruction.opname in _SPECIALIZATIONS:
             return _Stats(specialized=True)
-        if _adaptive_counter_value(instruction, raw_bytecode):
+        if _adaptive_counter_value(instruction, raw_bytecode) > (1, 1):
             return _Stats(adaptive=True)
     return _Stats(unquickened=True)
 

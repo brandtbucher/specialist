@@ -110,18 +110,34 @@ def test_main_c(source: pathlib.Path, expected: pathlib.Path) -> None:
 
 def test_main_c_raises() -> None:
     """$ specialist -c '[i * i for i in range(100)]; 42 / 0'"""
-    expected = (
-        "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;"
-        "charset=utf-8'/></head><body style='background-color:white;color:black'><pre><"
-        "span style='background-color:#d4fed4'>[</span><span style='background-color:#9"
-        "1fe91'>i</span><span style='background-color:#b0ffb0'> * </span><span style='b"
-        "ackground-color:#91fe91'>i</span><span style='background-color:#d4fed4'> for <"
-        "/span><span style='background-color:#b0ffb0'>i</span><span style='background-c"
-        "olor:#d4fed4'> in </span><span style='background-color:#dfffdf'>range</span><s"
-        "pan style='background-color:#daffda'>(</span><span style='background-color:#dd"
-        "ffdd'>100</span><span style='background-color:#daffda'>)</span><span style='ba"
-        "ckground-color:#d4fed4'>]</span>; 42 / 0</pre></body></html>"
-    )
+    if sys.version_info < (3, 12):
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre><span style='background-color:#d4fed4'>[</span><span style='backgro"
+            "und-color:#91fe91'>i</span><span style='background-color:#b0ffb0'> * </spa"
+            "n><span style='background-color:#91fe91'>i</span><span style='background-c"
+            "olor:#d4fed4'> for </span><span style='background-color:#b0ffb0'>i</span><"
+            "span style='background-color:#d4fed4'> in </span><span style='background-c"
+            "olor:#dfffdf'>range</span><span style='background-color:#daffda'>(</span><"
+            "span style='background-color:#ddffdd'>100</span><span style='background-co"
+            "lor:#daffda'>)</span><span style='background-color:#d4fed4'>]</span>; 42 /"
+            " 0</pre></body></html>"
+        )
+    else:
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre><span style='background-color:#d4fed4'>[</span><span style='backgro"
+            "und-color:#91fe91'>i</span><span style='background-color:#b0ffb0'> * </spa"
+            "n><span style='background-color:#91fe91'>i</span><span style='background-c"
+            "olor:#d4fed4'> for </span><span style='background-color:#b0ffb0'>i</span><"
+            "span style='background-color:#d4fed4'> in </span><span style='background-c"
+            "olor:#dfffdf'>range</span><span style='background-color:#daffda'>(</span><"
+            "span style='background-color:#ddffdd'>100</span><span style='background-co"
+            "lor:#daffda'>)</span><span style='background-color:#d4fed4'>]</span>; 42 /"
+            " 0</pre></body></html>"
+        )
     with assert_browses([expected]), pytest.raises(ZeroDivisionError):
         no_trace_main(["-c", "[i * i for i in range(100)]; 42 / 0"])
 
@@ -167,14 +183,26 @@ def test_main_m_raises_c() -> None:
 
 def test_main_no_location() -> None:
     """$ specialist -c 'def g(): yield from range(100)\nlist(g())'"""
-    expected = (
-        "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;"
-        "charset=utf-8'/></head><body style='background-color:white;color:black'><pre>d"
-        "ef g(): <span style='background-color:#d4fed4'>yield from </span><span style='"
-        "background-color:#ddffdd'>range</span><span style='background-color:#daffda'>("
-        "</span><span style='background-color:#ddffdd'>100</span><span style='backgroun"
-        "d-color:#daffda'>)</span>\nlist(g())</pre></body></html>"
-    )
+    if sys.version_info < (3, 12):
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre>def g(): <span style='background-color:#d4fed4'>yield from </span><"
+            "span style='background-color:#ddffdd'>range</span><span style='background-"
+            "color:#daffda'>(</span><span style='background-color:#ddffdd'>100</span><s"
+            "pan style='background-color:#daffda'>)</span>\nlist(g())</pre></body></htm"
+            "l>"
+        )
+    else:
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre>def g(): <span style='background-color:#d4fed4'>yield from </span><"
+            "span style='background-color:#ddffdd'>range</span><span style='background-"
+            "color:#daffda'>(</span><span style='background-color:#ddffdd'>100</span><s"
+            "pan style='background-color:#daffda'>)</span>\nlist(g())</pre></body></htm"
+            "l>"
+        )
     with assert_browses([expected]):
         no_trace_main(["-c", "def g(): yield from range(100)\nlist(g())"])
 
@@ -263,18 +291,34 @@ def test_main_targets_output_c(tmp_path: pathlib.Path) -> None:
 
 def test_main_package() -> None:
     """$ specialist -m test-data.input-package"""
-    expected = (
-        "<!doctype html><html><head><meta http-equiv='content-type' content='text/html;"
-        "charset=utf-8'/></head><body style='background-color:white;color:black'><pre><"
-        "span style='background-color:#daffda'>[</span><span style='background-color:#9"
-        "fff9f'>i</span><span style='background-color:#bbffbb'> * </span><span style='b"
-        "ackground-color:#9fff9f'>i</span><span style='background-color:#daffda'> for <"
-        "/span><span style='background-color:#bbffbb'>i</span><span style='background-c"
-        "olor:#daffda'> in </span><span style='background-color:#e2ffe2'>range</span><s"
-        "pan style='background-color:#dfffdf'>(</span><span style='background-color:#e1"
-        "ffe1'>100</span><span style='background-color:#dfffdf'>)</span><span style='ba"
-        "ckground-color:#daffda'>]</span>\n</pre></body></html>"
-    )
+    if sys.version_info < (3, 12):
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre><span style='background-color:#daffda'>[</span><span style='backgro"
+            "und-color:#9fff9f'>i</span><span style='background-color:#bbffbb'> * </spa"
+            "n><span style='background-color:#9fff9f'>i</span><span style='background-c"
+            "olor:#daffda'> for </span><span style='background-color:#bbffbb'>i</span><"
+            "span style='background-color:#daffda'> in </span><span style='background-c"
+            "olor:#e2ffe2'>range</span><span style='background-color:#dfffdf'>(</span><"
+            "span style='background-color:#e1ffe1'>100</span><span style='background-co"
+            "lor:#dfffdf'>)</span><span style='background-color:#daffda'>]</span>\n</pr"
+            "e></body></html>"
+        )
+    else:
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre><span style='background-color:#daffda'>[</span><span style='backgro"
+            "und-color:#9fff9f'>i</span><span style='background-color:#bbffbb'> * </spa"
+            "n><span style='background-color:#9fff9f'>i</span><span style='background-c"
+            "olor:#daffda'> for </span><span style='background-color:#bbffbb'>i</span><"
+            "span style='background-color:#daffda'> in </span><span style='background-c"
+            "olor:#e2ffe2'>range</span><span style='background-color:#dfffdf'>(</span><"
+            "span style='background-color:#e1ffe1'>100</span><span style='background-co"
+            "lor:#dfffdf'>)</span><span style='background-color:#daffda'>]</span>\n</pr"
+            "e></body></html>"
+        )
     module = ".".join(
         (TEST_DATA / "input-package").relative_to(pathlib.Path.cwd()).parts
     )
