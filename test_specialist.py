@@ -291,6 +291,41 @@ def test_main_targets_output_c(tmp_path: pathlib.Path) -> None:
         assert actual.read_text() == expected.read_text()
 
 
+def test_main_leading_and_trailing_whitespace() -> None:
+    """$ specialist -c 'pass'"""
+
+    if sys.version_info < (3, 12):
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre><span style='background-color:#daffda'>[</span><span style='backgro"
+            "und-color:#9fff9f'>i</span> \n<span style='background-color:#bbffbb'>*</sp"
+            "an>\n <span style='background-color:#9fff9f'>i</span><span style='backgrou"
+            "nd-color:#daffda'> for </span><span style='background-color:#bbffbb'>i</sp"
+            "an><span style='background-color:#daffda'> in </span><span style='backgrou"
+            "nd-color:#e2ffe2'>range</span><span style='background-color:#dfffdf'>(</sp"
+            "an><span style='background-color:#e1ffe1'>100</span><span style='backgroun"
+            "d-color:#dfffdf'>)</span><span style='background-color:#daffda'>]</span></"
+            "pre></body></html>"
+        )
+    else:
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre><span style='background-color:#d0ffd0'>[</span><span style='backgro"
+            "und-color:#99ff99'>i</span> \n<span style='background-color:#b6ffb6'>*</sp"
+            "an>\n <span style='background-color:#99ff99'>i</span><span style='backgrou"
+            "nd-color:#d0ffd0'> for </span><span style='background-color:#aaffaa'>i</sp"
+            "an><span style='background-color:#d0ffd0'> in </span><span style='backgrou"
+            "nd-color:#daffda'>range</span><span style='background-color:#d4fed4'>(</sp"
+            "an><span style='background-color:#d7ffd7'>100</span><span style='backgroun"
+            "d-color:#d4fed4'>)</span><span style='background-color:#d0ffd0'>]</span></"
+            "pre></body></html>"
+        )
+    with assert_browses([expected]):
+        no_trace_main(["-c", "[i \n*\n i for i in range(100)]"])
+
+
 def test_main_package() -> None:
     """$ specialist -m test-data.input-package"""
     if sys.version_info < (3, 12):

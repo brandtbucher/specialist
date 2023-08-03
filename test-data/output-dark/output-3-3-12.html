@@ -13,8 +13,8 @@ def c_to_f(c: float) -&gt; float:
 TEST_VALUES = [-459.67, -273.15, 0.0, 32.0, 42.0, 273.15, 100.0, 212.0, 373.15]
 
 def test_conversions() -&gt; None:
-    <span style='color:#bfffbf'>for </span><span style='color:#c6ffc6'>t</span><span style='color:#bfffbf'> in </span><span style='color:#c6ffc6'>TEST_VALUES</span><span style='color:#bfffbf'>:
-        </span><span style='color:#7fff7f'>assert_round_trip</span><span style='color:#a2ffa2'>(</span><span style='color:#aaffaa'>t</span><span style='color:#a2ffa2'>)</span>
+    <span style='color:#bfffbf'>for </span><span style='color:#c6ffc6'>t</span><span style='color:#bfffbf'> in </span><span style='color:#c6ffc6'>TEST_VALUES</span><span style='color:#bfffbf'>:</span>
+        <span style='color:#7fff7f'>assert_round_trip</span><span style='color:#a2ffa2'>(</span><span style='color:#aaffaa'>t</span><span style='color:#a2ffa2'>)</span>
 
 def assert_round_trip(t: float) -&gt; None:
     # Round-trip Fahrenheit through Celsius:

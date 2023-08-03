@@ -36,6 +36,7 @@ import importlib.util
 import itertools
 import opcode
 import os
+import re
 import runpy
 import shlex
 import sysconfig
@@ -44,6 +45,7 @@ import threading
 import typing
 import webbrowser
 
+_RE_WHITESPACE = re.compile(r"(\s*\n\s*)")
 _FIRST_POSTION = (1, 0)
 _LAST_POSITION = (sys.maxsize, 0)
 _CACHE_FORMAT = frozenset(opcode._cache_format)  # type: ignore [attr-defined] # pylint: disable = protected-access
@@ -119,9 +121,13 @@ class _HTMLWriter:
         color = self._color(stats)
         attribute = "color" if self._dark else "background-color"
         source = html.escape(source)
-        if color != "#ffffff":
-            source = f"<span style='{attribute}:{color}'>{source}</span>"
-        self._parts.append(source)
+        if color == "#ffffff":
+            self._parts.append(source)
+        else:
+            for part in filter(None, _RE_WHITESPACE.split(source)):
+                if _RE_WHITESPACE.fullmatch(part) is None:
+                    part = f"<span style='{attribute}:{color}'>{part}</span>"
+                self._parts.append(part)
 
     def emit(self) -> str:
         """Emit the HTML."""
