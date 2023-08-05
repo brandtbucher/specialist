@@ -18,7 +18,11 @@ information to create visual representations of exactly *where* and *how* CPytho
 [specializing, adaptive interpreter](https://peps.python.org/pep-0659/)
 optimizes your code.
 
+<div align=center>
+
 ![](https://raw.githubusercontent.com/brandtbucher/specialist/main/examples/output-0.png)
+
+</div>
 
 
 Installation
@@ -111,7 +115,11 @@ $ specialist conversions.py
 After the script has finished running, `specialist` will open a web browser and
 display the annotated program source:
 
+<div align=center>
+
 ![](https://raw.githubusercontent.com/brandtbucher/specialist/main/examples/output-1.png)
+
+</div>
 
 The green areas indicate regions of code that were successfully specialized,
 while the red areas indicate unsuccessful specializations (in the form of
@@ -129,13 +137,21 @@ It can, however, specialize addition and subtraction between two `float` values!
 Replacing `32` with `32.0` results in successful specializations (confirmed by
 re-running `specialist`):
 
+<div align=center>
+
 ![](https://raw.githubusercontent.com/brandtbucher/specialist/main/examples/output-2.png)
+
+</div>
 
 We can see that something similar is happening with `float` and `int`
 multiplication as well. One option could be to continue converting constant
 values to `float`:
 
+<div align=center>
+
 ![](https://raw.githubusercontent.com/brandtbucher/specialist/main/examples/output-3.png)
+
+</div>
 
 However, there's a better option! Notice that CPython doesn't attempt to
 specialize division at all (it's left white in the visualization). We can take
@@ -144,23 +160,11 @@ order of operations, which allows our scaling factors (`5 / 9` and `9 / 5`) to
 be computed at compile-time. When we do this, CPython is able to implement our
 converters *entirely* using native floating-point operations:
 
+<div align=center>
+
 ![](https://raw.githubusercontent.com/brandtbucher/specialist/main/examples/output-4.png)
 
-A few notes on the remaining code:
-
-- The global lookup of `TEST_VALUES` is red because it hasn't had the
-opportunity to be specialized yet. Though CPython *was* able to identify
-`test_conversions` as "hot" code and quicken the body, this didn't happen until
-*after* `TEST_VALUES` was looked up (which happens only once). It would be
-wasteful to spend time optimizing code that is never run again!
-
-- Similarly, parts of the `assert` statements in `assert_round_trip` are red
-because they are "dead" code that never actually runs.
-
-- The calls to `math.is_close` are orange because it is implemented in C.
-C extensions can't be "inlined" the same way as pure-Python calls like`c_to_f`,
-`f_to_c`, and `assert_round_trip`, so most of the call sequence isn't able to be
-specialized.
+</div>
 
 
 Modes
