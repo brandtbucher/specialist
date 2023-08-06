@@ -387,8 +387,9 @@ def _view(
         writer.add(source, stats)
     if not quickened:
         _stderr(
-            f"No quickened code found in {name or path}! Try modifying it to run "
-            f"longer, or use the --targets option to analyze different source files."
+            f"The current process contains no quickened code for {name or path}! Try "
+            f"modifying it to run longer, or use the --targets option to analyze "
+            f"different source files."
         )
         return False
     written = writer.emit()
