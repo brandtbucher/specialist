@@ -25,8 +25,8 @@ optimizes your code.
 </div>
 
 
-Installation
-------------
+Getting Started
+---------------
 
 Specialist supports CPython 3.11+ on all platforms.
 
@@ -35,6 +35,17 @@ To install, just run:
 ```sh
 $ pip install specialist
 ```
+
+If you normally use `pytest` to run your tests, then you can try using the
+following command to run them instead:
+
+```sh
+$ specialist --output report --targets '**/*.py' -m pytest # any additional pytest options here...
+```
+
+After your tests complete, `specialist` will create a directory named `report`
+and fill it with browsable HTML visualizations for each module in the current
+directory tree.
 
 
 Background
@@ -68,7 +79,8 @@ one. At this point, the cycle repeats itself.
 
 Specialist aims to provide insight into this process for the maintainers of
 CPython itself, as well as for users seeking an optimization profile for their
-own code.
+own code. If you're curious to learn more about specialization, check out [this
+talk from PyCon US 2023](https://youtu.be/shQtrn1v7sQ).
 
 
 Tutorial
