@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta http-equiv='content-type' content='text/html;charset=utf-8'/></head><body style='background-color:white;color:black'><pre>import math
+
+def f_to_c(f: float) -&gt; float:
+    &quot;&quot;&quot;Convert Fahrenheit to Celsius.&quot;&quot;&quot;
+    x = <span style='background-color:#c6c6ff'>f</span><span style='background-color:#bfbfff'> - </span><span style='background-color:#c6c6ff'>32.0</span>
+    return <span style='background-color:#ffa2fe'>x</span><span style='background-color:#ff99fe'> * </span><span style='background-color:#ffa2fe'>5.0</span><span style='background-color:#ffc6c6'> / </span><span style='background-color:#fecccc'>9</span>
+
+def c_to_f(c: float) -&gt; float:
+    &quot;&quot;&quot;Convert Celsius to Fahrenheit.&quot;&quot;&quot;
+    x = <span style='background-color:#ff99fe'>c</span><span style='background-color:#fe8dfe'> * </span><span style='background-color:#ff99fe'>9.0</span><span style='background-color:#ffbfbf'> / </span><span style='background-color:#ffc6c6'>5</span>
+    return <span style='background-color:#ccccfe'>x</span><span style='background-color:#c6c6ff'> + </span><span style='background-color:#ccccfe'>32.0</span>
+
+TEST_VALUES = [-459.67, -273.15, 0.0, 32.0, 42.0, 273.15, 100.0, 212.0, 373.15]
+
+def test_conversions() -&gt; None:
+    <span style='background-color:#ccccfe'>for </span><span style='background-color:#d0d0ff'>t</span><span style='background-color:#ccccfe'> in </span><span style='background-color:#d0d0ff'>TEST_VALUES</span><span style='background-color:#ccccfe'>:</span>
+        <span style='background-color:#9191fe'>assert_round_trip</span><span style='background-color:#b0b0ff'>(</span><span style='background-color:#b6b6ff'>t</span><span style='background-color:#b0b0ff'>)</span>
+
+def assert_round_trip(t: float) -&gt; None:
+    # Round-trip Fahrenheit through Celsius:
+    assert <span style='background-color:#7f7fff'>math</span><span style='background-color:#9999ff'>.isclose</span><span style='background-color:#b0b0ff'>(</span><span style='background-color:#b6b6ff'>t</span><span style='background-color:#b0b0ff'>, </span><span style='background-color:#7676ff'>f_to_c</span><span style='background-color:#9191fe'>(</span><span style='background-color:#5f5fff'>c_to_f</span><span style='background-color:#7676ff'>(</span><span style='background-color:#7f7fff'>t</span><span style='background-color:#7676ff'>)</span><span style='background-color:#9191fe'>)</span><span style='background-color:#b0b0ff'>)</span>, f&quot;{t} F -&gt; C -&gt; F failed!&quot;
+    # Round-trip Celsius through Fahrenheit:
+    assert <span style='background-color:#8686ff'>math</span><span style='background-color:#9f9fff'>.isclose</span><span style='background-color:#b6b6ff'>(</span><span style='background-color:#bbbbff'>t</span><span style='background-color:#b6b6ff'>, </span><span style='background-color:#7f7fff'>c_to_f</span><span style='background-color:#9999ff'>(</span><span style='background-color:#6969ff'>f_to_c</span><span style='background-color:#7f7fff'>(</span><span style='background-color:#8686ff'>t</span><span style='background-color:#7f7fff'>)</span><span style='background-color:#9999ff'>)</span><span style='background-color:#b6b6ff'>)</span>, f&quot;{t} C -&gt; F -&gt; C failed!&quot;
+
+if __name__ == &quot;__main__&quot;:
+    test_conversions()
+</pre></body></html>

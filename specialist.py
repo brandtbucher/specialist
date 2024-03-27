@@ -1,4 +1,5 @@
 """Visualize CPython 3.11's specializing, adaptive interpreter."""
+
 import pathlib
 import sys
 import types
@@ -48,49 +49,63 @@ import webbrowser
 _RE_WHITESPACE = re.compile(r"(\s*\n\s*)")
 _FIRST_POSTION = (1, 0)
 _LAST_POSITION = (sys.maxsize, 0)
-_CACHE_FORMAT = frozenset(opcode._cache_format)  # type: ignore [attr-defined] # pylint: disable = protected-access
-_SPECIALIZED_INSTRUCTIONS = frozenset(opcode._specialized_instructions)  # type: ignore [attr-defined] # pylint: disable = protected-access
+if sys.version_info < (3, 13):  # pragma: no cover
+    _CACHE_FORMAT = frozenset(opcode._cache_format)  # type: ignore [attr-defined] # pylint: disable = protected-access
+else:  # pragma: no cover
+    _CACHE_FORMAT = frozenset(opcode._cache_format) - {  # type: ignore [attr-defined] # pylint: disable = protected-access
+        "JUMP_BACKWARD",
+        "POP_JUMP_IF_FALSE",
+        "POP_JUMP_IF_NONE",
+        "POP_JUMP_IF_NOT_NONE",
+        "POP_JUMP_IF_TRUE",
+    }
+if sys.version_info < (3, 13):  # pragma: no cover
+    _SPECIALIZED_INSTRUCTIONS = frozenset(opcode._specialized_instructions)  # type: ignore [attr-defined] # pylint: disable = no-member, protected-access
+else:  # pragma: no cover
+    _SPECIALIZED_INSTRUCTIONS = frozenset(opcode._specialized_opmap) - {"RESUME_CHECK"}  # type: ignore [attr-defined] # pylint: disable = no-member, protected-access
 if sys.version_info < (3, 12):  # pragma: no cover
     _SUPERDUPERINSTRUCTIONS = frozenset({"PRECALL_NO_KW_LIST_APPEND"})
-    _SUPERINSTRUCTIONS = _SUPERDUPERINSTRUCTIONS | frozenset(
-        {
-            "BINARY_OP_INPLACE_ADD_UNICODE",
-            "COMPARE_OP_FLOAT_JUMP",
-            "COMPARE_OP_INT_JUMP",
-            "COMPARE_OP_STR_JUMP",
-            "LOAD_CONST__LOAD_FAST",
-            "LOAD_FAST__LOAD_CONST",
-            "LOAD_FAST__LOAD_FAST",
-            "PRECALL_BUILTIN_CLASS",
-            "PRECALL_BUILTIN_FAST_WITH_KEYWORDS",
-            "PRECALL_METHOD_DESCRIPTOR_FAST_WITH_KEYWORDS",
-            "PRECALL_NO_KW_BUILTIN_FAST",
-            "PRECALL_NO_KW_BUILTIN_O",
-            "PRECALL_NO_KW_ISINSTANCE",
-            "PRECALL_NO_KW_LEN",
-            "PRECALL_NO_KW_METHOD_DESCRIPTOR_FAST",
-            "PRECALL_NO_KW_METHOD_DESCRIPTOR_NOARGS",
-            "PRECALL_NO_KW_METHOD_DESCRIPTOR_O",
-            "PRECALL_NO_KW_STR_1",
-            "PRECALL_NO_KW_TUPLE_1",
-            "PRECALL_NO_KW_TYPE_1",
-            "STORE_FAST__LOAD_FAST",
-            "STORE_FAST__STORE_FAST",
-        }
-    )
+    _SUPERINSTRUCTIONS = _SUPERDUPERINSTRUCTIONS | {
+        "BINARY_OP_INPLACE_ADD_UNICODE",
+        "COMPARE_OP_FLOAT_JUMP",
+        "COMPARE_OP_INT_JUMP",
+        "COMPARE_OP_STR_JUMP",
+        "LOAD_CONST__LOAD_FAST",
+        "LOAD_FAST__LOAD_CONST",
+        "LOAD_FAST__LOAD_FAST",
+        "PRECALL_BUILTIN_CLASS",
+        "PRECALL_BUILTIN_FAST_WITH_KEYWORDS",
+        "PRECALL_METHOD_DESCRIPTOR_FAST_WITH_KEYWORDS",
+        "PRECALL_NO_KW_BUILTIN_FAST",
+        "PRECALL_NO_KW_BUILTIN_O",
+        "PRECALL_NO_KW_ISINSTANCE",
+        "PRECALL_NO_KW_LEN",
+        "PRECALL_NO_KW_METHOD_DESCRIPTOR_FAST",
+        "PRECALL_NO_KW_METHOD_DESCRIPTOR_NOARGS",
+        "PRECALL_NO_KW_METHOD_DESCRIPTOR_O",
+        "PRECALL_NO_KW_STR_1",
+        "PRECALL_NO_KW_TUPLE_1",
+        "PRECALL_NO_KW_TYPE_1",
+        "STORE_FAST__LOAD_FAST",
+        "STORE_FAST__STORE_FAST",
+    }
+elif sys.version_info < (3, 13):  # pragma: no cover
+    _SUPERDUPERINSTRUCTIONS: frozenset[str] = frozenset()
+    _SUPERINSTRUCTIONS = _SUPERDUPERINSTRUCTIONS | {
+        "BINARY_OP_INPLACE_ADD_UNICODE",
+        "CALL_NO_KW_LIST_APPEND",
+        "LOAD_CONST__LOAD_FAST",
+        "LOAD_FAST__LOAD_CONST",
+        "LOAD_FAST__LOAD_FAST",
+        "STORE_FAST__LOAD_FAST",
+        "STORE_FAST__STORE_FAST",
+    }
 else:  # pragma: no cover
     _SUPERDUPERINSTRUCTIONS: frozenset[str] = frozenset()
-    _SUPERINSTRUCTIONS = _SUPERDUPERINSTRUCTIONS | frozenset(
-        {
-            "BINARY_OP_INPLACE_ADD_UNICODE",
-            "CALL_NO_KW_LIST_APPEND",
-            "LOAD_CONST__LOAD_FAST",
-            "LOAD_FAST__LOAD_CONST",
-            "LOAD_FAST__LOAD_FAST",
-            "STORE_FAST__LOAD_FAST",
-            "STORE_FAST__STORE_FAST",
-        }
-    )
+    _SUPERINSTRUCTIONS = _SUPERDUPERINSTRUCTIONS | {
+        "BINARY_OP_INPLACE_ADD_UNICODE",
+        "CALL_LIST_APPEND",
+    }
 _PURELIB = pathlib.Path(sysconfig.get_path("purelib")).resolve()
 assert _PURELIB.is_dir(), _PURELIB
 _STDLIB = pathlib.Path(sysconfig.get_path("stdlib")).resolve()

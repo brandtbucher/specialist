@@ -1,4 +1,5 @@
 """Tests for the Specialist command-line tool."""
+
 import contextlib
 import pathlib
 import runpy
@@ -126,19 +127,32 @@ def test_main_c_raises() -> None:
             "lor:#daffda'>)</span><span style='background-color:#d4fed4'>]</span>; 42 /"
             " 0</pre></body></html>"
         )
+    elif sys.version_info < (3, 13):
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre><span style='background-color:#d7ffd7'>[</span><span style='backgro"
+            "und-color:#a4ffa4'>i</span><span style='background-color:#bfffbf'> * </spa"
+            "n><span style='background-color:#a4ffa4'>i</span><span style='background-c"
+            "olor:#d7ffd7'> for </span><span style='background-color:#b6ffb6'>i</span><"
+            "span style='background-color:#d7ffd7'> in </span><span style='background-c"
+            "olor:#dfffdf'>range</span><span style='background-color:#daffda'>(</span><"
+            "span style='background-color:#ddffdd'>100</span><span style='background-co"
+            "lor:#daffda'>)</span><span style='background-color:#d7ffd7'>]</span>; 42 /"
+            " 0</pre></body></html>"
+        )
     else:
         expected = (
             "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
             "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
-            "'><pre><span style='background-color:#ccfecc'>[</span><span style='backgro"
-            "und-color:#91fe91'>i</span><span style='background-color:#b0ffb0'> * </spa"
-            "n><span style='background-color:#91fe91'>i</span><span style='background-c"
-            "olor:#ccfecc'> for </span><span style='background-color:#a2ffa2'>i</span><"
-            "span style='background-color:#ccfecc'> in </span><span style='background-c"
-            "olor:#d7ffd7'>range</span><span style='background-color:#d0ffd0'>(</span><"
-            "span style='background-color:#d4fed4'>100</span><span style='background-co"
-            "lor:#d0ffd0'>)</span><span style='background-color:#ccfecc'>]</span>; 42 /"
-            " 0</pre></body></html>"
+            "'><pre><span style='background-color:#d7ffd7'>[</span><span style='backgro"
+            "und-color:#bfffbf'>i * </span><span style='background-color:#c3ffc3'>i</sp"
+            "an><span style='background-color:#d7ffd7'> for </span><span style='backgro"
+            "und-color:#daffda'>i</span><span style='background-color:#d7ffd7'> in </sp"
+            "an><span style='background-color:#dfffdf'>range</span><span style='backgro"
+            "und-color:#daffda'>(</span><span style='background-color:#ddffdd'>100</spa"
+            "n><span style='background-color:#daffda'>)</span><span style='background-c"
+            "olor:#d7ffd7'>]</span>; 42 / 0</pre></body></html>"
         )
     with assert_browses([expected]), pytest.raises(ZeroDivisionError):
         no_trace_main(["-c", "[i * i for i in range(100)]; 42 / 0"])
@@ -195,7 +209,7 @@ def test_main_no_location() -> None:
             "pan style='background-color:#daffda'>)</span>\nlist(g())</pre></body></htm"
             "l>"
         )
-    else:
+    elif sys.version_info < (3, 13):
         expected = (
             "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
             "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
@@ -203,6 +217,16 @@ def test_main_no_location() -> None:
             "span style='background-color:#ffdddd'>range</span><span style='background-"
             "color:#ffdada'>(</span><span style='background-color:#ffdddd'>100</span><s"
             "pan style='background-color:#ffdada'>)</span>\nlist(g())</pre></body></htm"
+            "l>"
+        )
+    else:
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre>def g(): <span style='background-color:#ffdada'>yield from </span><"
+            "span style='background-color:#ffdfdf'>range</span><span style='background-"
+            "color:#ffdddd'>(</span><span style='background-color:#ffdfdf'>100</span><s"
+            "pan style='background-color:#ffdddd'>)</span>\nlist(g())</pre></body></htm"
             "l>"
         )
     with assert_browses([expected]):
@@ -308,18 +332,32 @@ def test_main_leading_and_trailing_whitespace() -> None:
             "d-color:#dfffdf'>)</span><span style='background-color:#daffda'>]</span></"
             "pre></body></html>"
         )
+    elif sys.version_info < (3, 13):
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre><span style='background-color:#daffda'>[</span><span style='backgro"
+            "und-color:#aaffaa'>i</span> \n<span style='background-color:#c3ffc3'>*</sp"
+            "an>\n <span style='background-color:#aaffaa'>i</span><span style='backgrou"
+            "nd-color:#daffda'> for </span><span style='background-color:#bbffbb'>i</sp"
+            "an><span style='background-color:#daffda'> in </span><span style='backgrou"
+            "nd-color:#e1ffe1'>range</span><span style='background-color:#ddffdd'>(</sp"
+            "an><span style='background-color:#dfffdf'>100</span><span style='backgroun"
+            "d-color:#ddffdd'>)</span><span style='background-color:#daffda'>]</span></"
+            "pre></body></html>"
+        )
     else:
         expected = (
             "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
             "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
-            "'><pre><span style='background-color:#d0ffd0'>[</span><span style='backgro"
-            "und-color:#99ff99'>i</span> \n<span style='background-color:#b6ffb6'>*</sp"
-            "an>\n <span style='background-color:#99ff99'>i</span><span style='backgrou"
-            "nd-color:#d0ffd0'> for </span><span style='background-color:#aaffaa'>i</sp"
-            "an><span style='background-color:#d0ffd0'> in </span><span style='backgrou"
-            "nd-color:#daffda'>range</span><span style='background-color:#d4fed4'>(</sp"
-            "an><span style='background-color:#d7ffd7'>100</span><span style='backgroun"
-            "d-color:#d4fed4'>)</span><span style='background-color:#d0ffd0'>]</span></"
+            "'><pre><span style='background-color:#daffda'>[</span><span style='backgro"
+            "und-color:#c6ffc6'>i</span> \n<span style='background-color:#c3ffc3'>*</sp"
+            "an>\n <span style='background-color:#c6ffc6'>i</span><span style='backgrou"
+            "nd-color:#daffda'> for </span><span style='background-color:#ddffdd'>i</sp"
+            "an><span style='background-color:#daffda'> in </span><span style='backgrou"
+            "nd-color:#e1ffe1'>range</span><span style='background-color:#ddffdd'>(</sp"
+            "an><span style='background-color:#dfffdf'>100</span><span style='backgroun"
+            "d-color:#ddffdd'>)</span><span style='background-color:#daffda'>]</span></"
             "pre></body></html>"
         )
     with assert_browses([expected]):
@@ -342,7 +380,7 @@ def test_main_package() -> None:
             "lor:#dfffdf'>)</span><span style='background-color:#daffda'>]</span>\n</pr"
             "e></body></html>"
         )
-    else:
+    elif sys.version_info < (3, 13):
         expected = (
             "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
             "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
@@ -355,6 +393,19 @@ def test_main_package() -> None:
             "span style='background-color:#d7ffd7'>100</span><span style='background-co"
             "lor:#d4fed4'>)</span><span style='background-color:#d0ffd0'>]</span>\n</pr"
             "e></body></html>"
+        )
+    else:
+        expected = (
+            "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
+            "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
+            "'><pre><span style='background-color:#daffda'>[</span><span style='backgro"
+            "und-color:#c3ffc3'>i * </span><span style='background-color:#c6ffc6'>i</sp"
+            "an><span style='background-color:#daffda'> for </span><span style='backgro"
+            "und-color:#ddffdd'>i</span><span style='background-color:#daffda'> in </sp"
+            "an><span style='background-color:#e1ffe1'>range</span><span style='backgro"
+            "und-color:#ddffdd'>(</span><span style='background-color:#dfffdf'>100</spa"
+            "n><span style='background-color:#ddffdd'>)</span><span style='background-c"
+            "olor:#daffda'>]</span>\n</pre></body></html>"
         )
     module = ".".join(
         (TEST_DATA / "input-package").relative_to(pathlib.Path.cwd()).parts
