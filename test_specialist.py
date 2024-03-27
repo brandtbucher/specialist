@@ -384,14 +384,14 @@ def test_main_package() -> None:
         expected = (
             "<!doctype html><html><head><meta http-equiv='content-type' content='text/h"
             "tml;charset=utf-8'/></head><body style='background-color:white;color:black"
-            "'><pre><span style='background-color:#d0ffd0'>[</span><span style='backgro"
-            "und-color:#99ff99'>i</span><span style='background-color:#b6ffb6'> * </spa"
-            "n><span style='background-color:#99ff99'>i</span><span style='background-c"
-            "olor:#d0ffd0'> for </span><span style='background-color:#aaffaa'>i</span><"
-            "span style='background-color:#d0ffd0'> in </span><span style='background-c"
-            "olor:#daffda'>range</span><span style='background-color:#d4fed4'>(</span><"
-            "span style='background-color:#d7ffd7'>100</span><span style='background-co"
-            "lor:#d4fed4'>)</span><span style='background-color:#d0ffd0'>]</span>\n</pr"
+            "'><pre><span style='background-color:#daffda'>[</span><span style='backgro"
+            "und-color:#aaffaa'>i</span><span style='background-color:#c3ffc3'> * </spa"
+            "n><span style='background-color:#aaffaa'>i</span><span style='background-c"
+            "olor:#daffda'> for </span><span style='background-color:#bbffbb'>i</span><"
+            "span style='background-color:#daffda'> in </span><span style='background-c"
+            "olor:#e1ffe1'>range</span><span style='background-color:#ddffdd'>(</span><"
+            "span style='background-color:#dfffdf'>100</span><span style='background-co"
+            "lor:#ddffdd'>)</span><span style='background-color:#daffda'>]</span>\n</pr"
             "e></body></html>"
         )
     else:
