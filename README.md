@@ -13,8 +13,8 @@ Specialist
 <div align=justify>
 
 Specialist uses [fine-grained location](https://peps.python.org/pep-0657/)
-information to create visual representations of exactly *where* and *how* CPython
-3.11's new
+information to create visual representations of exactly *where* and *how*
+CPython's new
 [specializing, adaptive interpreter](https://peps.python.org/pep-0659/)
 optimizes your code.
 
@@ -51,12 +51,12 @@ directory tree.
 Background
 ----------
 
-While CPython 3.11 is running your code, it identifies "hot" regions that are
-being run often enough to spend time optimizing. It occasionally "quickens"
-these regions, which `specialist` represents using color. **Dark, rich colors
-indicate code with many quickened instructions (and, therefore, high
-specialization potential), while light, pale colors indicate code with
-relatively few specialization opportunities.**
+While CPython is running your code, it identifies "hot" regions that are being
+run often enough to spend time optimizing. It occasionally "quickens" these
+regions, which `specialist` represents using color. **Dark, rich colors indicate
+code with many quickened instructions (and, therefore, high specialization
+potential), while light, pale colors indicate code with relatively few
+specialization opportunities.**
 
 Most of the time, quickening involves three phases:
 
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     test_conversions()
 ```
 
-We can run this file with CPython 3.11 from the command-line using `specialist`:
+We can run this file with CPython from the command-line using `specialist`:
 
 ```sh
 $ specialist conversions.py

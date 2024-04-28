@@ -1,4 +1,4 @@
-"""Visualize CPython 3.11's specializing, adaptive interpreter."""
+"""Visualize CPython's specializing, adaptive interpreter."""
 
 import pathlib
 import sys
